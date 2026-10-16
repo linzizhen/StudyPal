@@ -675,7 +675,8 @@ def generate_weekly_insight(study_stats, emotion_data, memories) -> str:
 
     try:
         ai = get_ai_instance()
-        answer = ai.ask_simple(prompt)
+        # 周记是派生展示内容，不应写入对话历史（否则 GET 请求会产生写副作用）
+        answer = ai.ask_simple(prompt, save_to_history=False)
         return answer
     except Exception:
         return "这一周辛苦了~ 继续加油，下周会更好！💪"

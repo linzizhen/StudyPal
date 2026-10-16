@@ -11,18 +11,18 @@ from flask import Blueprint, jsonify, request, g
 from typing import Dict, Any, Optional
 
 from src.auth.auth import auth_required, auth_optional, get_current_user, ai_limit_required
+from src.core.buddy import get_buddy
 
 buddy_bp = Blueprint('buddy', __name__, url_prefix='/api/buddy')
 
 
 def get_user_buddy():
     """获取当前用户的 Buddy 实例（基于用户数据）"""
-    from src.core.buddy import get_buddy
     return get_buddy()
 
 
-@auth_optional
 @buddy_bp.route('/status', methods=['GET'])
+@auth_optional
 def get_buddy_status():
     """获取搭子完整状态"""
     user = get_current_user()
@@ -186,8 +186,8 @@ def buddy_quick_chat():
         }), 500
 
 
-@auth_optional
 @buddy_bp.route('/profile', methods=['GET'])
+@auth_optional
 def get_buddy_profile():
     """获取用户档案"""
     from src.buddy.buddy_profile import get_buddy_profile
@@ -202,8 +202,8 @@ def get_buddy_profile():
     })
 
 
-@auth_optional
 @buddy_bp.route('/profile', methods=['PUT', 'POST'])
+@auth_optional
 def update_buddy_profile():
     """更新用户档案"""
     from src.buddy.buddy_profile import get_buddy_profile
@@ -218,8 +218,8 @@ def update_buddy_profile():
     })
 
 
-@auth_optional
 @buddy_bp.route('/memory', methods=['GET'])
+@auth_optional
 def get_buddy_memory():
     """获取搭子记忆"""
     from src.buddy.buddy_memory import get_buddy_memory
@@ -245,8 +245,8 @@ def get_buddy_memory():
     })
 
 
-@auth_optional
 @buddy_bp.route('/memory', methods=['POST'])
+@auth_optional
 def add_buddy_memory():
     """添加场景记忆"""
     from src.buddy.buddy_memory import get_buddy_memory

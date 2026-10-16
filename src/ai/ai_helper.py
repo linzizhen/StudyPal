@@ -279,7 +279,9 @@ class StudyPalAI:
         try:
             if conversation_id:
                 self.current_conversation_id = conversation_id
-            elif self.current_conversation_id is None:
+            elif self.current_conversation_id is None and save_to_history:
+                # 仅在需要落库时才创建会话；只读场景（save_to_history=False）
+                # 不应因为一次问答就在历史里凭空多出一条空会话。
                 self.current_conversation_id = self.ai_memory.create_conversation()
 
             final_system_prompt = system_prompt if system_prompt else SYSTEM_PROMPT
@@ -287,7 +289,7 @@ class StudyPalAI:
                 {"role": "system", "content": final_system_prompt}
             ]
 
-            if use_history:
+            if use_history and self.current_conversation_id:
                 stored_messages = self.ai_memory.get_conversation_messages(self.current_conversation_id)
                 if stored_messages:
                     for msg in stored_messages[-self.max_history_length:]:
@@ -326,11 +328,16 @@ class StudyPalAI:
             _tb.print_exc()
             raise Exception(f"AI 请求失败：{str(e)}")
 
-    def ask_simple(self, question: str) -> str:
+    def ask_simple(self, question: str, save_to_history: bool = True) -> str:
         """
         简单版本的 ask，返回纯文本回答（兼容旧接口）
+
+        参数:
+            question: 用户问题
+            save_to_history: 是否写入对话历史。派生展示类场景（周记、洞察等）
+                应传 False，避免只读请求产生写副作用。
         """
-        result = self.ask(question)
+        result = self.ask(question, save_to_history=save_to_history)
         return result["answer"]
 
     def clear_history(self):

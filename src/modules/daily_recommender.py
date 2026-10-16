@@ -144,11 +144,16 @@ class DailyTaskRecommender:
         }
 
     def _get_completed_subjects(self) -> List[str]:
-        """获取今日已学习的科目"""
+        """获取今日已学习的科目（按学习时长聚合，只保留时长大于 0 的科目）"""
         if not self._study_tracker:
             return []
-        stats = self._study_tracker.get_today_subjects()
-        return [s for s, mins in stats.items() if mins > 0]
+        minutes_by_subject: Dict[str, float] = {}
+        for session in self._study_tracker.get_today_sessions():
+            subject = session.get("subject")
+            if not subject:
+                continue
+            minutes_by_subject[subject] = minutes_by_subject.get(subject, 0) + session.get("duration", 0)
+        return [subject for subject, minutes in minutes_by_subject.items() if minutes > 0]
 
     def _get_pending_tasks(self) -> List[Dict]:
         """获取待完成的任务"""

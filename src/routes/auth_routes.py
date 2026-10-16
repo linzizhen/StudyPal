@@ -86,8 +86,8 @@ def login():
     return jsonify({'success': False, 'error': message}), 401
 
 
-@auth_required
 @auth_bp.route('/me', methods=['GET'])
+@auth_required
 def get_me():
     """获取当前用户信息"""
     user = get_current_user()
@@ -97,8 +97,8 @@ def get_me():
     })
 
 
-@auth_required
 @auth_bp.route('/me', methods=['PUT', 'PATCH'])
+@auth_required
 def update_me():
     """更新用户信息"""
     user = get_current_user()
@@ -125,8 +125,8 @@ def update_me():
     })
 
 
-@auth_required
 @auth_bp.route('/subscription', methods=['GET'])
+@auth_required
 def get_subscription():
     """获取订阅信息"""
     user = get_current_user()
@@ -147,8 +147,8 @@ def get_subscription():
     })
 
 
-@auth_required
 @auth_bp.route('/ai/stats', methods=['GET'])
+@auth_required
 def get_ai_stats():
     """获取AI使用统计"""
     user = get_current_user()
@@ -170,8 +170,8 @@ def get_ai_stats():
 
 # ==================== 管理员接口 ====================
 
-@auth_required
 @auth_bp.route('/admin/users', methods=['GET'])
+@auth_required
 def admin_list_users():
     """管理员：获取用户列表"""
     user = get_current_user()
@@ -203,8 +203,8 @@ def admin_list_users():
     })
 
 
-@auth_required
 @auth_bp.route('/admin/stats', methods=['GET'])
+@auth_required
 def admin_get_stats():
     """管理员：获取系统统计"""
     user = get_current_user()
