@@ -78,6 +78,30 @@ function applyUserName(name) {
 }
 
 // ============================================================
+// 我的挑战（延迟挂载）
+// ============================================================
+var _challengesMounted = false;
+
+function mountChallenges() {
+  if (_challengesMounted) return;
+  var page = window.ChallengePage;
+  var container = document.getElementById('page-challenges');
+  if (!page || !container) {
+    // 模块未加载或容器缺失：给出可读提示而不是静默失败
+    if (container) {
+      container.innerHTML = '<div class="empty-state-large">挑战模块暂时不可用，请刷新页面重试</div>';
+    }
+    return;
+  }
+  try {
+    page.mount(container);
+    _challengesMounted = true;
+  } catch (e) {
+    container.innerHTML = '<div class="empty-state-large">挑战模块加载出错，请稍后重试</div>';
+  }
+}
+
+// ============================================================
 // 导航切换
 // ============================================================
 var _lastSection = null;
@@ -110,6 +134,11 @@ function initNavigation() {
     if (sectionName === 'buddy') {
       if (typeof loadCurrentBuddyMessages === 'function') loadCurrentBuddyMessages();
       if (typeof loadConversationHistory === 'function') loadConversationHistory();
+    }
+
+    // 进入我的挑战 → 挂载挑战模块（延迟到首次进入，避免无谓请求）
+    if (sectionName === 'challenges') {
+      mountChallenges();
     }
 
     updateRightSidebar(sectionName);

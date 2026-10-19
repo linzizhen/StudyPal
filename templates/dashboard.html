@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyPal</title>
     <link rel="stylesheet" href="/static/css/dashboard.css">
+    <link rel="stylesheet" href="/static/css/challenge.css">
 </head>
 <body>
     <!-- ==================== 左侧导航栏 ==================== -->
@@ -61,6 +62,10 @@
             <a href="#growth" class="nav-item" data-section="growth">
                 <span class="nav-icon">🌱</span>
                 <span class="nav-text">我的成长</span>
+            </a>
+            <a href="#challenges" class="nav-item" data-section="challenges">
+                <span class="nav-icon">🏆</span>
+                <span class="nav-text">我的挑战</span>
             </a>
             <a href="#settings" class="nav-item" data-section="settings">
                 <span class="nav-icon">⚙️</span>
@@ -696,6 +701,15 @@
             </div>
         </div>
 
+        <!-- ---- 我的挑战页 ---- -->
+        <div class="page-section hidden" id="section-challenges">
+            <div class="page-header">
+                <h1 class="page-title">🏆 我的挑战</h1>
+            </div>
+            <!-- 挑战模块自己渲染内容；此容器用于挂载 -->
+            <div id="page-challenges" class="page-challenges-wrap"></div>
+        </div>
+
         <!-- ---- 设置页 ---- -->
         <div class="page-section hidden" id="section-settings">
             <div class="page-header">
@@ -913,6 +927,9 @@
 
     </main>
 
+    <!-- 我的挑战模块：api.js 提供 window.API，challenges.js 依赖它 -->
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/pages/challenges.js"></script>
     <script src="/static/js/dashboard.js"></script>
 </body>
 </html>
