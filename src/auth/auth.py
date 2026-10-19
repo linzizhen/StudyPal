@@ -301,6 +301,43 @@ class AuthService:
                 return user
         return None
 
+    # 新密码长度下限，与注册保持一致
+    MIN_PASSWORD_LENGTH = 6
+
+    @staticmethod
+    def change_password(email: str, old_password: str, new_password: str) -> tuple:
+        """校验旧密码后修改为新密码。
+
+        返回 ``(是否成功, 提示信息)``。
+
+        安全要点：
+        - 必须校验旧密码，避免 token 被窃后直接改密码
+        - 新密码不得与旧密码相同，也不得短于 MIN_PASSWORD_LENGTH
+        - 新密码一律以加盐哈希存储（旧的无盐哈希在此被覆盖掉）
+        """
+        if not email or not old_password or not new_password:
+            return False, '请填写完整信息'
+
+        if len(new_password) < AuthService.MIN_PASSWORD_LENGTH:
+            return False, f'新密码至少 {AuthService.MIN_PASSWORD_LENGTH} 位'
+
+        if new_password == old_password:
+            return False, '新密码不能和旧密码相同'
+
+        email = email.lower().strip()
+        users = _load_users()
+        if email not in users:
+            return False, '用户不存在'
+
+        user = users[email]
+        if not _verify_password(old_password, user.get('password_hash', '')):
+            return False, '原密码不正确'
+
+        user['password_hash'] = _hash_password(new_password)
+        user['password_changed_at'] = datetime.now().isoformat()
+        _save_users(users)
+        return True, '密码已修改'
+
     @staticmethod
     def increment_ai_calls(user_id: int):
         """增加AI调用次数"""

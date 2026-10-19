@@ -122,6 +122,32 @@ def update_me():
     })
 
 
+@auth_bp.route('/password', methods=['POST'])
+@auth_required
+def change_password():
+    """修改密码
+
+    请求体：{ "old_password": "...", "new_password": "..." }
+    需要携带有效的 Authorization 头。
+    """
+    user = get_current_user()
+    data = request.json or {}
+
+    old_password = data.get('old_password', '')
+    new_password = data.get('new_password', '')
+
+    if not old_password or not new_password:
+        return jsonify({'success': False, 'error': '请填写原密码和新密码'}), 400
+
+    ok, message = AuthService.change_password(
+        user.get('email', ''), old_password, new_password
+    )
+    if not ok:
+        return jsonify({'success': False, 'error': message}), 400
+
+    return jsonify({'success': True, 'message': message})
+
+
 @auth_bp.route('/subscription', methods=['GET'])
 @auth_required
 def get_subscription():

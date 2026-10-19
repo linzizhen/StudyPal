@@ -897,6 +897,9 @@ function initSettings() {
   // 账户状态卡
   initAccountStatus();
 
+  // 修改密码
+  initChangePassword();
+
   // 搭子设计器弹窗
   var openBtn = document.getElementById('btn-open-buddy-designer');
   if (openBtn) {
@@ -1401,6 +1404,10 @@ function initAccountStatus() {
     if (logoutBtn) logoutBtn.style.display = 'inline-block';
   }
 
+  // 改密码区域仅在登录后显示
+  var pwdSection = document.getElementById('password-section');
+  if (pwdSection) pwdSection.style.display = token ? 'block' : 'none';
+
   if (reloginBtn) {
     reloginBtn.onclick = function() {
       window.location.href = '/login';
@@ -1418,6 +1425,66 @@ function initAccountStatus() {
 }
 
 // ============================================================
+// 修改密码
+// ============================================================
+function initChangePassword() {
+  var btn = document.getElementById('btn-change-password');
+  if (!btn) return;
+  btn.addEventListener('click', function() {
+    var oldPw = (document.getElementById('old-password') || {}).value || '';
+    var newPw = (document.getElementById('new-password') || {}).value || '';
+    var newPw2 = (document.getElementById('new-password2') || {}).value || '';
+
+    if (!oldPw || !newPw) {
+      showToast('请填写原密码和新密码');
+      return;
+    }
+    if (newPw.length < 6) {
+      showToast('新密码至少 6 位');
+      return;
+    }
+    if (newPw !== newPw2) {
+      showToast('两次输入的新密码不一致');
+      return;
+    }
+    if (newPw === oldPw) {
+      showToast('新密码不能和原密码相同');
+      return;
+    }
+
+    btn.disabled = true;
+    rawFetch('/api/auth/password', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + getToken()
+      },
+      body: JSON.stringify({ old_password: oldPw, new_password: newPw })
+    })
+      .then(function(res) {
+        return res.json().then(function(data) { return { ok: res.ok, data: data }; });
+      })
+      .then(function(result) {
+        if (result.ok && result.data.success) {
+          showToast('密码已修改，下次请用新密码登录');
+          ['old-password', 'new-password', 'new-password2'].forEach(function(id) {
+            var el = document.getElementById(id);
+            if (el) el.value = '';
+          });
+        } else {
+          showToast((result.data && result.data.error) || '修改失败');
+        }
+      })
+      .catch(function() {
+        showToast('网络异常，请稍后再试');
+      })
+      .then(function() {
+        btn.disabled = false;
+      });
+  });
+}
+
+// ============================================================
 // 搭子对话（真实 AI + 内存保留）
 // ============================================================
 
@@ -1426,15 +1493,22 @@ var BUDDY_CONVERSATIONS = {
   xiaodou: [],
   aran: [],
   xuejie: [],
-  xiaoye: []
+  senior: [],
+  xiaoye: [],
+  xj: [],
+  azheng: []
 };
 
 // 搭子专属错误提示 / 思考语
+// xuejie 是 senior 的前端别名，两个键都保留以避免任一侧取不到数据
 var BUDDY_THINKING = {
   xiaodou: '小豆正在思考...',
   aran:    '阿燃正在燃烧斗志...',
   xuejie:  '小老师正在一步步推导...',
-  xiaoye:  '小夜正在静静思考...'
+  senior:  '小老师正在一步步推导...',
+  xiaoye:  '小夜正在静静思考...',
+  xj:      '戏精正在编段子...',
+  azheng:  '阿正正在理清逻辑...'
 };
 
 function _nowTimeStr() {

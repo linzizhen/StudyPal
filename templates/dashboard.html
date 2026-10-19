@@ -825,6 +825,27 @@
                         <button type="button" id="logout-btn" class="btn-secondary" style="display: none;">退出登录</button>
                     </div>
                 </div>
+
+                <!-- 修改密码（需登录） -->
+                <div id="password-section" style="display: none;">
+                    <div class="settings-group-title" style="margin-top: 16px;">🔑 修改密码</div>
+                    <div class="form-group">
+                        <label class="input-label" for="old-password">原密码</label>
+                        <input class="input-field" type="password" id="old-password"
+                               placeholder="请输入当前密码" autocomplete="current-password">
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label" for="new-password">新密码</label>
+                        <input class="input-field" type="password" id="new-password"
+                               placeholder="至少 6 位" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label class="input-label" for="new-password2">确认新密码</label>
+                        <input class="input-field" type="password" id="new-password2"
+                               placeholder="再输入一次" autocomplete="new-password">
+                    </div>
+                    <button type="button" class="btn-primary" id="btn-change-password">修改密码</button>
+                </div>
             </div>
 
             <!-- 关于 -->
@@ -832,7 +853,7 @@
                 <div class="card-header-title">关于</div>
                 <div class="about-info">
                     <div class="about-logo">StudyPal</div>
-                    <div class="about-version">版本 1.0.0</div>
+                    <div class="about-version">面向小学到初中的学习搭子</div>
                     <div class="about-desc">你的私人 AI 学习搭子 + 一站式学习管理工具</div>
                 </div>
             </div>
