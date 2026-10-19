@@ -1,0 +1,47 @@
+chore(清理): 删除前端死链路（5548 行）并修复静态资源 404
+
+背景：项目曾有两套并行前端。app.py 只渲染 templates/dashboard.html，
+而 templates/index.html 无任何路由可达，其整条链路（app.js、api.js、
+pages/*、5 个 CSS）全部不可达。按用户决策，删除与本方向无关的部分，
+保留"我的挑战"模块前端作为待接线资产。
+
+已删除（5548 行）
+- templates/index.html（619 行，无路由可达）
+- static/js/app.js（1318 行，仅被 index.html 引用）
+- static/js/pages/home.js
+- static/js/pages/diary.js（全文中文双重编码损坏，207 处乱码）
+- static/css/variables.css、base.css、components.css、mobile.css
+  （仅被 index.html 引用）
+
+已保留（待接线，属新方向所需）
+- static/js/pages/challenges.js —— 唯一实现完整的挑战模块前端，
+  而后端 routes/challenges.py 的 20 个端点全部是活的；挑战模块正是
+  小学/初中学段体系，属当前产品方向
+- static/js/api.js —— challenges.js 的 API 封装依赖
+- static/css/challenge.css —— 挑战模块样式
+- static/avatars/*.svg —— 最新提交新增的角色头像
+
+保留资产的清理
+- challenges.js：删除高中档（学段选项、_selectGrade 入口、renderHigh、
+  gradeMode==='high' 判断、高危度着色区分），学段收敛为小学/初中；
+  去"已有考研目标迁移"文案
+- api.js：迁移函数注释去考研
+- challenge.css：段落注释去高中
+
+修复静态资源 404 行为（顺带发现的缺陷）
+- app.py 的 404 处理器原对所有非 /api/ 路径渲染 dashboard.html，
+  导致请求不存在的静态资源时返回 200 + 44KB HTML，浏览器会把 HTML
+  当 JS/CSS 执行并抛出难以定位的语法错误
+- 现改为：/api/ 返回 JSON 404；/static/ 返回纯文本 404；
+  其它路径才走 SPA 前端路由兜底
+
+新增测试 tests/test_dead_code_cleanup.py（27 项）：
+- 已删除的 8 个文件确不存在；保留的 5 个资产确存在
+- 活链路文件完整；app.py 不再渲染 index.html
+- 9 个页面路由与活链路静态资源仍返回 200
+- 已删除的静态资源返回 404（不再伪装成 HTML）
+- 保留资产不得残留高中档与考研文案
+- 挑战前端声明的学段必须与后端 GRADE_MODES 一致
+- challenge.css 不得 import 已删除的样式文件
+
+验证：node --check 通过；全量 158 项测试通过；data/ 零污染。

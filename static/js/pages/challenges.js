@@ -1,12 +1,12 @@
 /**
  * StudyPal "我的挑战" 页面模块
- * 支持小学/初中/高中三阶段差异化挑战体系
+ * 支持小学/初中两学段差异化挑战体系
  */
 
 const GRADE_LABELS_CN = {
     primary: '小学',
     middle: '初中',
-    high: '高中',
+    
 };
 
 const TIMELINE_ICONS = {
@@ -42,7 +42,7 @@ class ChallengePage {
         try {
             const res = await API.migrateChallengeData();
             if (res && res.migrated && window.showToast) {
-                showToast('已迁移旧版考研目标数据', 'success');
+                showToast('已迁移旧版学习目标数据', 'success');
             }
         } catch (e) { /* 静默失败，不影响主流程 */ }
     }
@@ -89,7 +89,7 @@ class ChallengePage {
         switch (this.gradeMode) {
             case 'primary': this.renderPrimary(); break;
             case 'middle':  this.renderMiddle();  break;
-            case 'high':    this.renderHigh();    break;
+            
             default:        this.renderMiddle();
         }
     }
@@ -194,7 +194,7 @@ class ChallengePage {
         `;
     }
 
-    // ====================== 高中（冲刺模式） ======================
+    
 
     renderHigh() {
         this.renderOverview();
@@ -488,7 +488,7 @@ class ChallengePage {
             return;
         }
 
-        const showRank = (this.gradeMode === 'middle' || this.gradeMode === 'high');
+        const showRank = (this.gradeMode === 'middle');
         const classAvgItem = all.find(m => m.type === 'class_avg');
 
         el.innerHTML = `
@@ -670,11 +670,6 @@ class ChallengePage {
                     <div class="challenge-grade-option-name">初中</div>
                     <div class="challenge-grade-option-desc">7-9 年级</div>
                 </div>
-                <div class="challenge-grade-option" data-grade="high" onclick="ChallengePage._selectGrade('high')">
-                    <div class="challenge-grade-option-icon">🎓</div>
-                    <div class="challenge-grade-option-name">高中</div>
-                    <div class="challenge-grade-option-desc">10-12 年级</div>
-                </div>
             </div>
         `;
         this.openModal(html);
@@ -703,7 +698,7 @@ class ChallengePage {
             <div class="challenge-form-row">
                 <label class="challenge-form-label">学习阶段</label>
                 <div class="challenge-grade-pills">
-                    ${['primary', 'middle', 'high'].map(g => `
+                    ${['primary', 'middle'].map(g => `
                         <button type="button" class="challenge-grade-pill ${g === grade ? 'active' : ''}" data-grade="${g}" onclick="ChallengePage._pickGrade('${g}')">
                             ${GRADE_LABELS_CN[g]}
                         </button>
@@ -912,7 +907,7 @@ class ChallengePage {
             target_score: isNaN(target) ? 100 : target,
             full_score: isNaN(full) ? 100 : full,
             current_score: isNaN(current) ? 0 : current,
-            display_mode: this.gradeMode === 'high' ? 'score' : 'star',
+            display_mode: 'star',
             max_level: this.gradeMode === 'primary' ? 5 : 10,
             weak_points,
         };
@@ -1090,7 +1085,7 @@ class ChallengePage {
                 <select class="challenge-input" id="tl-urgency">
                     <option value="low">低</option>
                     <option value="medium" selected>中</option>
-                    <option value="high">高</option>
+                    
                 </select>
             </div>
             <div class="challenge-form-actions">

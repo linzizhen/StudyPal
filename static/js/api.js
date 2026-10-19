@@ -476,7 +476,7 @@ const API = {
         return this.delete(`/challenges/challenge/${challengeId}/timeline/${nodeId}`);
     },
 
-    /** 从旧版考研目标迁移数据 */
+    /** 从旧版学习目标迁移数据 */
     async migrateChallengeData() {
         return this.post('/challenges/migrate');
     },

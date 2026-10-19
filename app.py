@@ -148,8 +148,15 @@ def health_check():
 
 @app.errorhandler(404)
 def not_found(error):
+    # API 请求：返回 JSON
     if request.path.startswith('/api/'):
         return jsonify({'success': False, 'error': '资源不存在'}), 404
+    # 静态资源：必须返回真正的 404。
+    # 若在此渲染 dashboard.html，浏览器会把 HTML 当作 JS/CSS 执行，
+    # 导致难以定位的语法错误。
+    if request.path.startswith('/static/'):
+        return '资源不存在', 404
+    # 其它路径：SPA 前端路由兜底，交给单页应用处理
     return render_template('dashboard.html')
 
 

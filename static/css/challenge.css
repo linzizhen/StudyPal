@@ -439,7 +439,7 @@
     flex-wrap: wrap;
 }
 
-/* ===== 高中分布条形图 ===== */
+/* ===== 成绩分布条形图 ===== */
 .challenge-distribution-list {
     display: flex;
     flex-direction: column;
@@ -482,7 +482,7 @@
     text-align: right;
 }
 
-/* ===== 高中减压每日一句 ===== */
+/* ===== 每日一句 ===== */
 .challenge-daily-quote {
     background: #FFF8DC;
     border-left: 3px solid #FAAD14;
