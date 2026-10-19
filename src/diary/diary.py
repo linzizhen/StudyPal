@@ -51,6 +51,13 @@ class DiaryEntry:
             self.images: List[str] = []
             self.tags: List[str] = []
             self.weather = ""
+            # 以下字段由 routes/diary.py 与问候流程写入（学习感受 / 大事 / 想对搭子说）
+            self.study_feeling = ""
+            self.biggest_event = ""
+            self.words_to_buddy = ""
+            self.study_hours = 0
+            self.buddy_response = ""
+            self.tasks_completed: List[str] = []
             self.created_at = datetime.now().isoformat()
             self.updated_at = datetime.now().isoformat()
 
@@ -66,6 +73,12 @@ class DiaryEntry:
         self.images = data.get("images", [])
         self.tags = data.get("tags", [])
         self.weather = data.get("weather", "")
+        self.study_feeling = data.get("study_feeling", "")
+        self.biggest_event = data.get("biggest_event", "")
+        self.words_to_buddy = data.get("words_to_buddy", "")
+        self.study_hours = data.get("study_hours", 0)
+        self.buddy_response = data.get("buddy_response", "")
+        self.tasks_completed = data.get("tasks_completed", [])
         self.created_at = data.get("created_at", datetime.now().isoformat())
         self.updated_at = data.get("updated_at", datetime.now().isoformat())
 
@@ -82,6 +95,12 @@ class DiaryEntry:
             "images": self.images,
             "tags": self.tags,
             "weather": self.weather,
+            "study_feeling": self.study_feeling,
+            "biggest_event": self.biggest_event,
+            "words_to_buddy": self.words_to_buddy,
+            "study_hours": self.study_hours,
+            "buddy_response": self.buddy_response,
+            "tasks_completed": self.tasks_completed,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -93,6 +112,29 @@ class DiaryEntry:
             if emotion["level"] == level:
                 return emotion
         return cls.EMOTIONS[4]  # 默认返回愉快
+
+
+# 情绪量表边界：全项目统一以此为准，避免各模块各自硬编码 1..5 或 1..10
+DiaryEntry.EMOTION_MIN_LEVEL = min(e["level"] for e in DiaryEntry.EMOTIONS)
+DiaryEntry.EMOTION_MAX_LEVEL = max(e["level"] for e in DiaryEntry.EMOTIONS)
+
+# 等级 -> 标签 映射（routes/diary.py:76 与 src/core/buddy.py:664 都在用它）
+DiaryEntry.EMOTION_LABELS = {e["level"]: e["label"] for e in DiaryEntry.EMOTIONS}
+
+
+def emotion_label_for_level(level) -> str:
+    """把任意情绪等级（或平均分）安全地转为中文标签。
+
+    用于替代 routes/insights.py 里 ``['很难受', ...][int(avg) - 1]`` 那种
+    硬编码 5 元素数组索引 —— 后者在平均分 >= 6（量表实为 10 级）时直接
+    IndexError。本函数对越界值做就近钳制，永不抛异常。
+    """
+    try:
+        value = int(round(float(level)))
+    except (TypeError, ValueError):
+        value = DiaryEntry.EMOTION_MIN_LEVEL
+    value = max(DiaryEntry.EMOTION_MIN_LEVEL, min(DiaryEntry.EMOTION_MAX_LEVEL, value))
+    return DiaryEntry.EMOTION_LABELS.get(value, "一般")
 
 
 class Diary:
@@ -123,9 +165,20 @@ class Diary:
         content: str = "",
         images: List[str] = None,
         tags: List[str] = None,
-        weather: str = ""
+        weather: str = "",
+        study_feeling: str = "",
+        biggest_event: str = "",
+        words_to_buddy: str = "",
+        study_hours: float = 0,
+        tasks_completed: List[str] = None
     ) -> DiaryEntry:
-        """添加日记条目"""
+        """添加日记条目
+
+        同时支持两种调用风格：
+        - 通用风格：title / content / images / tags / weather
+        - 学习日记风格：study_feeling / biggest_event / words_to_buddy /
+          study_hours / tasks_completed（routes/diary.py 使用这一组）
+        """
         emotion = DiaryEntry.get_emotion_by_level(emotion_level)
         entry_data = {
             "id": datetime.now().strftime("%Y%m%d%H%M%S"),
@@ -138,6 +191,12 @@ class Diary:
             "images": images or [],
             "tags": tags or [],
             "weather": weather,
+            "study_feeling": study_feeling,
+            "biggest_event": biggest_event,
+            "words_to_buddy": words_to_buddy,
+            "study_hours": study_hours,
+            "buddy_response": "",
+            "tasks_completed": tasks_completed or [],
             "created_at": datetime.now().isoformat(),
             "updated_at": datetime.now().isoformat(),
         }

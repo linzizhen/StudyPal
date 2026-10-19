@@ -151,12 +151,16 @@ def get_insight_summary():
     valid_levels = [l for l in emotion_data.get('levels', []) if l is not None]
     avg_emotion = sum(valid_levels) / len(valid_levels) if valid_levels else 3
 
+    # 标签由 diary 模块统一提供：原地硬编码的 5 元素数组索引在平均分 >= 6
+    # （量表实为 10 级）时会 IndexError
+    from src.diary.diary import emotion_label_for_level
+
     summary = {
         'week_hours': round(this_week_hours, 1),
         'trend': trend,
         'trend_text': trend_text,
         'emotion_avg': round(avg_emotion, 1),
-        'emotion_label': ['很难受', '有点丧', '一般', '还好', '很开心'][int(avg_emotion) - 1] if valid_levels else '一般',
+        'emotion_label': emotion_label_for_level(avg_emotion) if valid_levels else '一般',
         'streak_days': stats.get('streak_days', 0),
         'study_summary': _get_study_summary(stats),
     }
