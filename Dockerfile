@@ -4,12 +4,6 @@ FROM python:3.11-slim
 # 设置工作目录
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libpq-dev \
-    && rm -rf /var/lib/apt/lists/*
-
 # 设置 Python 环境
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -33,8 +27,10 @@ USER appuser
 EXPOSE 5000
 
 # 健康检查
+# 说明：python:3.11-slim 不含 curl，因此这里用 Python 标准库发请求，
+# 避免依赖镜像中不存在的命令导致健康检查恒失败。
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:5000/api/health || exit 1
+    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:5000/api/health', timeout=5).status == 200 else 1)"
 
 # 启动命令
 CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--threads", "2", "--timeout", "120", "app:app"]

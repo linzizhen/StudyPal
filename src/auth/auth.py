@@ -123,7 +123,14 @@ def _get_signing_key() -> bytes:
 
     优先级：环境变量 SECRET_KEY > 本地持久化密钥文件 > 新生成并落盘。
 
-    必须持久化：若每次启动都随机生成，进程重启后所有已签发 token 立即失效。
+    为什么必须持久化：若每次启动都随机生成，进程重启后所有已签发 token
+    立即失效。
+
+    并发安全：多 worker 部署（Dockerfile 用 gunicorn --workers 4）时，多个
+    进程会同时首次初始化。若只用"检查文件 -> 生成 -> 写入"，各进程会各自
+    生成不同密钥并争抢写入，先写者获胜，导致部分 worker 签发的 token 被
+    其它 worker 拒绝、用户随机掉线。这里改用 O_CREAT|O_EXCL 原子创建：
+    只有一个进程能创建成功，其余进程回到读取分支，从而拿到同一把密钥。
     """
     import os as _os
 
@@ -132,24 +139,92 @@ def _get_signing_key() -> bytes:
         return env_secret.encode('utf-8')
 
     key_file = _os.path.join(DATA_DIR, '.signing_key')
-    try:
-        if _os.path.exists(key_file):
-            with open(key_file, 'rb') as handle:
-                key = handle.read().strip()
-            if key:
-                return key
-        _ensure_data_dir()
-        key = secrets.token_bytes(32)
-        with open(key_file, 'wb') as handle:
-            handle.write(key)
+    key_length = 32
+
+    def _read_key():
+        """读取密钥，只有长度正确才认可。
+
+        为什么校验长度：写入方可能尚未写完，若只判断"非空"就会读到
+        残缺内容（表现为长度多出或少掉几个字符），进而签发出与其它
+        worker 不同的 token。
+        """
         try:
-            _os.chmod(key_file, 0o600)
+            with open(key_file, 'rb') as handle:
+                value = handle.read().strip()
         except OSError:
-            pass
-        return key
+            return None
+        if value and len(value) == key_length:
+            return value
+        return None
+
+    try:
+        _ensure_data_dir()
+
+        existing = _read_key()
+        if existing:
+            return existing
+
+        # 发布密钥采用"写临时文件 + link() 原子发布"：
+        #
+        # 为什么不用 O_CREAT|O_EXCL 直接写目标文件：该方式创建成功后、
+        # 写入完成前，文件对其它进程是"存在但长度为 0"的，读者无法区分
+        # "正在写入"与"已成空文件"，只能盲等。
+        #
+        # 为什么不用 rename/os.replace：rename 会无条件覆盖目标，
+        # 多进程同时启动时后写者会覆盖先写者，导致先发布的进程持有的
+        # 密钥与文件不一致。
+        #
+        # link() 的正确语义：仅当目标不存在时创建硬链接，目标已存在则
+        # 抛 FileExistsError。因此恰好一个进程发布成功，其余进程转为读取
+        # 那份已写完的完整内容。
+        tmp_file = f"{key_file}.{secrets.token_hex(8)}.tmp"
+        try:
+            with open(tmp_file, 'wb') as handle:
+                handle.write(secrets.token_bytes(key_length))
+                handle.flush()
+                _os.fsync(handle.fileno())
+            try:
+                _os.link(tmp_file, key_file)
+                published = True
+            except FileExistsError:
+                # 已有其它进程抢先发布：丢弃自己的临时文件，去读那一份
+                published = False
+            except OSError:
+                # 文件系统不支持硬链接（如部分网络盘）：退化为直接写入。
+                # 此时可能出现覆盖，但已有环境变量 SECRET_KEY 作为首选
+                # 方案覆盖该场景。
+                with open(key_file, 'wb') as handle:
+                    handle.write(secrets.token_bytes(key_length))
+                    handle.flush()
+                    _os.fsync(handle.fileno())
+                published = True
+        finally:
+            try:
+                if _os.path.exists(tmp_file):
+                    _os.remove(tmp_file)
+            except OSError:
+                pass
+
+        if published:
+            value = _read_key()
+            if value:
+                return value
+
+        # 去读已发布的那一份（带耐心等待，覆盖极端时序）
+        deadline = time.monotonic() + 30
+        while time.monotonic() < deadline:
+            value = _read_key()
+            if value:
+                return value
+            time.sleep(0.01)
+
+        raise RuntimeError(
+            f"签名密钥文件长期未就绪：{key_file}。"
+            "请检查该文件权限，或改用环境变量 SECRET_KEY 显式指定密钥。"
+        )
     except OSError:
-        # 极端情况下无法落盘：退化为进程内临时密钥（仅当次运行有效）
-        return secrets.token_bytes(32)
+        # 落盘不可用：退化为进程内临时密钥（仅当次运行有效）
+        return secrets.token_bytes(key_length)
 
 
 def _sign_payload(payload: str) -> str:

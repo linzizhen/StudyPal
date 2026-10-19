@@ -1,0 +1,42 @@
+# 版本控制与编辑器
+.git/
+.gitignore
+.cursor/
+.vscode/
+.idea/
+
+# Python 缓存与虚拟环境
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.pytest-tmp/
+.pytest-data-backup/
+
+# 测试
+tests/
+
+# 文档（镜像内不需要）
+*.md
+!README.md
+
+# 本地数据与密钥
+data/
+src/data/
+.env
+.env.local
+.env.production
+*.db
+*.sqlite
+*.sqlite3
+.signing_key
+
+# 日志与临时文件
+*.log
+*.err
+.msg.txt
+commit_msg_tmp.txt
+.dockerignore
+Dockerfile
+docker-compose.yml
