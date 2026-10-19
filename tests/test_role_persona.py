@@ -223,6 +223,39 @@ def test_quick_chat_accepts_frontend_alias_xuejie(client):
     )
     assert resp.status_code == 200
     sent = recorder.last_system_prompt
-    assert "学姐" in sent or "小老师" in sent, (
-        f"xuejie 未映射到 senior 人设，实际提示词：{sent[:120]}"
+    assert "小老师" in sent, (
+        f"xuejie 未映射到小老师人设，实际提示词：{sent[:120]}"
     )
+
+
+# ==================== 提示词模块整体去考研 ====================
+
+
+def test_no_prompt_template_uses_kaoyan_as_context():
+    """整套提示词模板不得再把考研当语境（仅允许出现在禁令句中）。
+
+    覆盖 prompt_templates.py 里除角色对话外的其他模板：
+    情绪支持、学习计划、鼓励、每日总结、早安问候、周记、讲解、plan、method。
+    """
+    import inspect
+
+    import src.ai.prompt_templates as pt
+
+    source = inspect.getsource(pt)
+    offenders = []
+    for line_no, line in enumerate(source.splitlines(), start=1):
+        if "考研" not in line:
+            continue
+        # 禁令句允许
+        if "不要提" in line or "不得" in line:
+            continue
+        offenders.append(f"{line_no}: {line.strip()}")
+    assert not offenders, "以下位置仍把考研当语境：\n  " + "\n  ".join(offenders)
+
+
+def test_insight_prompt_speaks_to_a_child_not_a_kaoyan_candidate():
+    """周记提示词不得出现考研搭子字样。"""
+    from src.ai.prompt_templates import WEEKLY_INSIGHT_PROMPT
+
+    assert "考研" not in WEEKLY_INSIGHT_PROMPT
+    assert "学习搭子" in WEEKLY_INSIGHT_PROMPT
