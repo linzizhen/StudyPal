@@ -144,6 +144,12 @@ def buddy_quick_chat():
             save_to_history=False,
         )
         reply = (result.get('answer') or '').strip()
+
+        # 把这一轮对话里值得记住的信息写入记忆库。
+        # 这是"孩子被记住"的关键一步：此前只读取记忆来构造提示词，
+        # 却从不写入，导致记忆库永远是空的。
+        _remember_from_chat(message, reply)
+
         return jsonify({
             'success': True,
             'reply': reply[:4000],
@@ -175,6 +181,19 @@ def _build_memory_context_for_chat() -> str:
         return get_buddy_memory().build_context_for_ai() or ""
     except Exception:
         return ""
+
+
+def _remember_from_chat(message: str, reply: str) -> int:
+    """把一轮对话里值得记住的信息写入记忆库，返回写入条数。
+
+    失败时静默降级（返回 0）：记忆写入出问题不应影响孩子拿到回答。
+    """
+    try:
+        from src.buddy.buddy_memory import get_buddy_memory
+        from src.buddy.memory_extractor import record_memories
+        return record_memories(get_buddy_memory(), message, reply)
+    except Exception:
+        return 0
 
 
 def _build_study_summary_for_chat() -> str:

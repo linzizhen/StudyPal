@@ -19,6 +19,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import uuid
 
 import pytest
@@ -57,41 +58,73 @@ def test_signing_key_is_stable_across_calls():
 def test_signing_key_survives_concurrent_first_init(tmp_path_factory=None):
     """模拟 4 个 worker 并发首次初始化，必须全部拿到同一把密钥。
 
-    做法：把 DATA_DIR 指向一个空目录，用多进程同时调用 _get_signing_key()，
-    再比较各进程得到的密钥是否一致。
+    为什么需要"共同起跑线"：4 个进程若各自串行地启动解释器 + import，
+    真正并发争抢密钥文件的时刻可能被系统负载打散，测试就变得对机器
+    负载敏感（曾出现 60 秒超时导致的偶发失败）。这里让每个 worker 先
+    完成 import 与目录准备，再通过一个触发文件同时放行，确保它们真正
+    在同一时刻去创建密钥文件。
     """
     tmp = os.path.join(PROJECT_ROOT, ".pytest-tmp", uuid.uuid4().hex[:8])
     os.makedirs(tmp, exist_ok=True)
     try:
         worker_script = os.path.join(tmp, "worker.py")
-        out_dir = os.path.join(tmp, "out")
-        os.makedirs(out_dir, exist_ok=True)
+        go_file = os.path.join(tmp, "GO")
+        ready_dir = os.path.join(tmp, "ready")
+        os.makedirs(ready_dir, exist_ok=True)
         with open(worker_script, "w", encoding="utf-8") as handle:
             handle.write(
-                "import sys, os\n"
+                "import sys, os, time\n"
                 f"sys.path.insert(0, {PROJECT_ROOT!r})\n"
                 "from src.auth import auth as A\n"
                 f"A.DATA_DIR = {tmp!r}\n"
+                "os.makedirs(A.DATA_DIR, exist_ok=True)\n"
+                # 就绪信号：用独占创建标记自己的 ready 文件
+                f"open(os.path.join({ready_dir!r}, str(os.getpid())), 'w').close()\n"
+                # 等所有 worker 就绪后同时开跑
+                f"deadline = time.monotonic() + 60\n"
+                f"while not os.path.exists({go_file!r}) "
+                "and time.monotonic() < deadline:\n"
+                "    time.sleep(0.01)\n"
                 "key = A._get_signing_key()\n"
-                "print(key.hex())\n"
+                "print(key.hex(), flush=True)\n"
             )
 
-        # 并发启动 4 个进程
         env = dict(os.environ)
         env.pop("SECRET_KEY", None)
+
+        worker_count = 4
         procs = [
             subprocess.Popen(
                 [sys.executable, worker_script],
                 stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env,
                 cwd=PROJECT_ROOT,
             )
-            for _ in range(4)
+            for _ in range(worker_count)
         ]
+
+        # 等所有 worker 完成 import 并就绪
+        ready_deadline = time.monotonic() + 120
+        while (len(os.listdir(ready_dir)) < worker_count
+               and time.monotonic() < ready_deadline):
+            time.sleep(0.02)
+
+        ready_count = len(os.listdir(ready_dir))
+        assert ready_count == worker_count, (
+            f"只有 {ready_count}/{worker_count} 个 worker 就绪，"
+            "测试环境启动进程过慢（不是被测代码的问题）"
+        )
+
+        # 同时放行
+        open(go_file, "w").close()
+
         keys = []
-        for proc in procs:
-            out, err = proc.communicate(timeout=60)
+        for index, proc in enumerate(procs):
+            out, err = proc.communicate(timeout=120)
             text = out.decode().strip().splitlines()
-            assert text, f"worker 未输出密钥：{err.decode()[:200]}"
+            assert text, (
+                f"第 {index + 1} 个 worker 未输出密钥。"
+                f"stderr={err.decode()[:300]}"
+            )
             keys.append(text[-1])
 
         assert len(set(keys)) == 1, (
