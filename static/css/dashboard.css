@@ -231,8 +231,8 @@ body {
 .quick-desc { font-size: 12px; color: #8C8C8C; }
 .quick-arrow { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: #BFBFBF; font-size: 16px; }
 
-.exam-goal-preview { margin-bottom: 20px; }
-.exam-goal-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.growth-preview { margin-bottom: 20px; }
+.growth-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
 .exam-stat { text-align: center; }
 .exam-stat-icon { font-size: 20px; margin-bottom: 8px; }
 .exam-stat-value { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
@@ -398,7 +398,7 @@ body {
 @media (max-width: 1200px) {
   .right-sidebar { width: 240px; }
   .main-content { margin-right: 240px; }
-  .stats-row, .exam-goal-stats, .goals-grid { grid-template-columns: repeat(2, 1fr); }
+  .stats-row, .growth-stats, .goals-grid { grid-template-columns: repeat(2, 1fr); }
   .quick-actions, .two-column, .settings-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 900px) {
@@ -408,7 +408,7 @@ body {
   .main-content { margin-left: 60px; margin-right: 0; }
   .right-sidebar { display: none; }
   .stats-row, .quick-actions, .two-column, .settings-grid { grid-template-columns: 1fr; }
-  .exam-goal-stats, .goals-grid { grid-template-columns: repeat(2, 1fr); }
+  .growth-stats, .goals-grid { grid-template-columns: repeat(2, 1fr); }
 }
 /* ==================== 学习搭子页 ==================== */
 .buddy-layout {

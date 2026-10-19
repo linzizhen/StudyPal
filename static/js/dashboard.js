@@ -66,8 +66,16 @@ document.addEventListener('DOMContentLoaded', function() {
   initChat();
   initSettings();
   updateGreeting();
-  updateCountdown();
+  loadUserName();
+  loadGrowth();
 });
+
+// 把昵称填充到侧栏与问候语
+function applyUserName(name) {
+  if (!name) return;
+  setText('sidebar-user-name', name);
+  updateGreeting();
+}
 
 // ============================================================
 // 导航切换
@@ -129,40 +137,125 @@ function initNavigation() {
 
 function updateRightSidebar(section) {
   var rsDefault = document.getElementById('rs-default');
-  var rsExam = document.getElementById('rs-exam-goal');
-  if (rsDefault && rsExam) {
-    rsDefault.classList.toggle('hidden', section === 'exam-goal');
-    rsExam.classList.toggle('hidden', section !== 'exam-goal');
+  var rsGrowth = document.getElementById('rs-growth');
+  if (rsDefault && rsGrowth) {
+    rsDefault.classList.toggle('hidden', section === 'growth');
+    rsGrowth.classList.toggle('hidden', section !== 'growth');
   }
 }
 
 // ============================================================
-// 问候语 + 倒计时
+// 问候语 + 我的成长
 // ============================================================
 function updateGreeting() {
   var el = document.getElementById('greeting-text');
   if (!el) return;
   var h = new Date().getHours();
-  var greeting = '学习战士';
-  if (h < 6) greeting = '夜猫子';
-  else if (h < 9) greeting = '早起的鸟';
+  var greeting = '你好';
+  if (h < 6) greeting = '还没睡呀';
+  else if (h < 9) greeting = '早上好';
   else if (h < 12) greeting = '上午好';
   else if (h < 14) greeting = '中午好';
   else if (h < 18) greeting = '下午好';
   else if (h < 21) greeting = '晚上好';
-  else greeting = '夜猫子';
-  el.textContent = greeting + '，学习战士';
+  else greeting = '晚上好';
+  var name = getDisplayName();
+  el.textContent = name ? (greeting + '，' + name) : greeting;
 }
 
-function updateCountdown() {
-  var examDate = new Date('2026-12-21');
-  var today = new Date();
-  var diff = Math.ceil((examDate - today) / (1000 * 60 * 60 * 24));
-  var days = diff > 0 ? diff : 0;
-  ['countdown-days', 'rs-countdown-days', 'exam-days'].forEach(function(id) {
-    var el = document.getElementById(id);
-    if (el) el.textContent = days;
-  });
+// 取孩子昵称：优先已缓存的用户信息，其次 localStorage.username，最后请求 /api/auth/me
+function getDisplayName() {
+  var cached = '';
+  try {
+    var raw = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (raw) {
+      var u = JSON.parse(raw);
+      cached = (u && (u.nickname || u.name)) || '';
+    }
+  } catch (e) { cached = ''; }
+  if (!cached) cached = getUsername();
+  return (cached || '').trim();
+}
+
+// 未登录时也能显示昵称：从后端补齐一次
+function loadUserName() {
+  var cached = getDisplayName();
+  if (cached) {
+    applyUserName(cached);
+    return;
+  }
+  fetch('/api/auth/me')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      var u = (data && data.user) || null;
+      if (u && (u.nickname || u.name)) {
+        try { localStorage.setItem('user', JSON.stringify(u)); } catch (e) {}
+        applyUserName(u.nickname || u.name);
+      }
+    })
+    .catch(function() {});
+}
+
+// 我的成长：连续打卡天数 + 本周小星星
+// 数据来源：/api/study/stats（真实学习数据），失败时安全降级为 0
+function loadGrowth() {
+  var fallback = { streak: 0, todayHours: 0, weekHours: 0 };
+  fetch('/api/study/stats')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      var stats = (data && data.stats) || {};
+      var streak = stats.streak_days || 0;
+      var todayHours = stats.today_hours || 0;
+      var weekHours = stats.week_hours || 0;
+      renderGrowth({ streak: streak, todayHours: todayHours, weekHours: weekHours });
+    })
+    .catch(function() { renderGrowth(fallback); });
+}
+
+function renderGrowth(info) {
+  var streak = info.streak || 0;
+  var todayHours = info.todayHours || 0;
+  var weekHours = info.weekHours || 0;
+
+  // 本周星星：每完成 1 小时学习点亮一颗，最多 7 颗
+  var stars = Math.min(7, Math.floor(weekHours));
+
+  setText('rs-countdown-days', streak);
+  setText('growth-streak', streak);
+  setText('rs-week-stars', stars);
+  setText('week-stars-total', '本周共 ' + stars + ' 颗');
+
+  // 仪表盘预览卡
+  setText('exam-school', streak + ' 天');
+  setText('exam-major', stars + ' 颗');
+  setText('exam-score', weekHours.toFixed(1) + ' 小时');
+
+  // 星星网格
+  var grid = document.getElementById('week-stars-grid');
+  if (grid) {
+    if (stars > 0) {
+      var marks = [];
+      for (var i = 0; i < stars; i++) marks.push('⭐');
+      grid.textContent = marks.join(' ');
+      grid.classList.remove('empty-state-large');
+    } else {
+      grid.textContent = '还没有点亮星星，今天开始吧';
+    }
+  }
+
+  // 鼓励语
+  var encourage = document.getElementById('growth-encourage');
+  if (encourage) {
+    if (streak >= 7) encourage.textContent = '连着来 ' + streak + ' 天啦，你真的很棒！';
+    else if (streak >= 3) encourage.textContent = '已经坚持 ' + streak + ' 天啦，继续保持~';
+    else if (todayHours > 0) encourage.textContent = '今天学过了，给自己点个赞吧';
+    else encourage.textContent = '每天来学一点，就很了不起啦';
+  }
+}
+
+function setText(id, value) {
+  var el = document.getElementById(id);
+  if (el) el.textContent = value;
 }
 
 // ============================================================

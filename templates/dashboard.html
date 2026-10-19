@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
@@ -27,7 +27,7 @@
                 <span class="status-dot"></span>
             </div>
             <div class="user-meta">
-                <div class="user-name">学习战士 <span class="level-badge">Lv.1</span></div>
+                <div class="user-name"><span id="sidebar-user-name">小同学</span> <span class="level-badge">Lv.1</span></div>
                 <div class="user-status">准备学习中~</div>
             </div>
         </div>
@@ -58,9 +58,9 @@
                 <span class="nav-icon">📈</span>
                 <span class="nav-text">数据统计</span>
             </a>
-            <a href="#exam-goal" class="nav-item" data-section="exam-goal">
-                <span class="nav-icon">🎯</span>
-                <span class="nav-text">考研目标</span>
+            <a href="#growth" class="nav-item" data-section="growth">
+                <span class="nav-icon">🌱</span>
+                <span class="nav-text">我的成长</span>
             </a>
             <a href="#settings" class="nav-item" data-section="settings">
                 <span class="nav-icon">⚙️</span>
@@ -112,12 +112,18 @@
             </div>
         </div>
 
-        <!-- 考研目标边栏 -->
-        <div class="rs-exam-goal hidden" id="rs-exam-goal">
+        <!-- 我的成长边栏 -->
+        <div class="rs-growth hidden" id="rs-growth">
             <div class="card">
-                <div class="card-title">距离考研初试</div>
-                <div class="countdown-big" id="rs-countdown-days">175</div>
+                <div class="card-title">连续打卡</div>
+                <div class="countdown-big" id="rs-countdown-days">0</div>
                 <div class="countdown-unit-big">天</div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">本周小星星</div>
+                <div class="countdown-big" id="rs-week-stars">0</div>
+                <div class="countdown-unit-big">颗</div>
             </div>
 
             <div class="card">
@@ -141,7 +147,7 @@
         <div class="page-section hidden" id="section-dashboard">
             <div class="page-header">
                 <div>
-                    <div class="greeting" id="greeting-text">早上好，学习战士</div>
+                    <div class="greeting" id="greeting-text">你好</div>
                 </div>
                 <button class="btn-primary" id="btn-start-study">开始学习</button>
             </div>
@@ -224,31 +230,31 @@
                 </div>
             </div>
 
-            <div class="card exam-goal-preview">
+            <div class="card growth-preview">
                 <div class="card-header">
-                    <span class="card-header-title">🎯 考研目标</span>
-                    <button class="btn-text" data-section="exam-goal">编辑</button>
+                    <span class="card-header-title">🌱 我的成长</span>
+                    <button class="btn-text" data-section="growth">查看</button>
                 </div>
-                <div class="exam-goal-stats">
+                <div class="growth-stats">
                     <div class="exam-stat">
-                        <div class="exam-stat-icon">🎓</div>
-                        <div class="exam-stat-value" id="exam-school">--</div>
-                        <div class="exam-stat-label">目标院校</div>
+                        <div class="exam-stat-icon">🔥</div>
+                        <div class="exam-stat-value" id="exam-school">0 天</div>
+                        <div class="exam-stat-label">连续打卡</div>
+                    </div>
+                    <div class="exam-stat">
+                        <div class="exam-stat-icon">⭐</div>
+                        <div class="exam-stat-value" id="exam-major">0 颗</div>
+                        <div class="exam-stat-label">本周小星星</div>
                     </div>
                     <div class="exam-stat">
                         <div class="exam-stat-icon">📚</div>
-                        <div class="exam-stat-value" id="exam-major">--</div>
-                        <div class="exam-stat-label">目标专业</div>
+                        <div class="exam-stat-value" id="exam-score">0 小时</div>
+                        <div class="exam-stat-label">本周学习</div>
                     </div>
                     <div class="exam-stat">
-                        <div class="exam-stat-icon">⚡</div>
-                        <div class="exam-stat-value" id="exam-score">376 分</div>
-                        <div class="exam-stat-label">目标分数</div>
-                    </div>
-                    <div class="exam-stat">
-                        <div class="exam-stat-icon">📅</div>
-                        <div class="exam-stat-value" id="exam-days">175 天</div>
-                        <div class="exam-stat-label">剩余天数</div>
+                        <div class="exam-stat-icon">✅</div>
+                        <div class="exam-stat-value" id="exam-days">0 个</div>
+                        <div class="exam-stat-label">完成小任务</div>
                     </div>
                 </div>
             </div>
@@ -259,21 +265,21 @@
             </div>
         </div>
 
-        <!-- ---- 考研目标页 ---- -->
-        <div class="page-section hidden" id="section-exam-goal">
+        <!-- ---- 我的成长页 ---- -->
+        <div class="page-section hidden" id="section-growth">
             <div class="page-header">
                 <div class="page-title">
-                    <span class="title-icon">🎯</span>
-                    <span>考研目标</span>
+                    <span class="title-icon">🌱</span>
+                    <span>我的成长</span>
                 </div>
                 <button class="btn-primary" id="btn-add-subject">+ 添加科目</button>
             </div>
 
             <div class="exam-countdown-card">
-                <div class="countdown-label">⏱️ 距离考研初试</div>
-                <div class="countdown-number" id="countdown-days">175</div>
+                <div class="countdown-label">🔥 连续打卡</div>
+                <div class="countdown-number" id="growth-streak">0</div>
                 <div class="countdown-unit">天</div>
-                <div class="countdown-date">2026年12月21日 - 12月22日</div>
+                <div class="countdown-date" id="growth-encourage">每天来学一点，就很了不起啦</div>
             </div>
 
             <div class="two-column">
@@ -283,22 +289,22 @@
                 </div>
 
                 <div class="card">
-                    <div class="card-header-title">🏆 历年分数线</div>
-                    <div class="empty-state-large">暂无分数线数据</div>
+                    <div class="card-header-title">⭐ 本周小星星</div>
+                    <div class="empty-state-large" id="week-stars-grid">还没有点亮星星，今天开始吧</div>
                     <div class="score-target">
-                        <div>目标分数 380 分</div>
-                        <div class="score-diff">比去年分数线高 <span class="highlight">+15分</span></div>
+                        <div id="week-stars-total">本周共 0 颗</div>
+                        <div class="score-diff">完成一个任务点亮 <span class="highlight">一颗星</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="card">
-                <div class="card-header-title">📅 重要节点</div>
+                <div class="card-header-title">📅 我的足迹</div>
                 <div class="timeline-list" id="timeline-list">
                     <div class="timeline-item">
-                        <div class="timeline-name">考研初试</div>
-                        <div class="timeline-badge">175天</div>
-                        <div class="timeline-date">2026-12-21</div>
+                        <div class="timeline-name">还没有记录，今天就是第一天</div>
+                        <div class="timeline-badge">现在</div>
+                        <div class="timeline-date">--</div>
                     </div>
                 </div>
             </div>
