@@ -60,3 +60,6 @@ src/data/
 # 提交信息临时文件
 .msg.txt
 commit_msg_tmp.txt
+
+.cmsg.txt
+*.cmsg.txt
