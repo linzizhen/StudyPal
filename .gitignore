@@ -56,3 +56,7 @@ data/*.json
 src/data/
 .pytest-tmp/
 .pytest-data-backup/
+
+# 提交信息临时文件
+.msg.txt
+commit_msg_tmp.txt
