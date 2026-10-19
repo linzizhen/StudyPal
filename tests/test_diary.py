@@ -53,6 +53,23 @@ def diary(tmp_path_factory=None):
         shutil.rmtree(tmp, ignore_errors=True)
 
 
+@pytest.fixture(autouse=True)
+def isolate_real_data():
+    """涉及真实 Flask 应用的测试会写 data/，这里保证结束后还原。"""
+    backup = os.path.join(PROJECT_ROOT, ".pytest-data-backup-diary")
+    data_dir = os.path.join(PROJECT_ROOT, "data")
+    shutil.rmtree(backup, ignore_errors=True)
+    if os.path.isdir(data_dir):
+        shutil.copytree(data_dir, backup)
+    try:
+        yield
+    finally:
+        if os.path.isdir(backup):
+            for name in os.listdir(backup):
+                shutil.copy2(os.path.join(backup, name), os.path.join(data_dir, name))
+            shutil.rmtree(backup, ignore_errors=True)
+
+
 # ==================== B1 add_entry 签名 ====================
 
 
@@ -107,6 +124,45 @@ def test_add_entry_still_accepts_class_style_arguments(diary):
     entry = diary.add_entry(emotion_level=3, title="标题", content="正文")
     assert entry.title == "标题"
     assert entry.content == "正文"
+
+
+def test_route_accepts_full_ten_level_scale():
+    """路由校验范围必须覆盖 10 级全量表（用户已确定采用 10 档细粒度）。
+
+    原实现硬编码 1..5，与 EMOTIONS 的 10 级制冲突：6..10 会被误判为非法。
+    """
+    from src.diary.diary import DiaryEntry as DE
+    from src.auth import auth as auth_module  # noqa: F401
+
+    import types as _types
+
+    try:
+        import flask_cors  # noqa: F401
+    except ImportError:
+        _stub = _types.ModuleType("flask_cors")
+        _stub.CORS = lambda app=None, **kw: (lambda f: f)
+        sys.modules["flask_cors"] = _stub
+
+    import app as mainapp
+
+    mainapp.app.config["TESTING"] = True
+    client = mainapp.app.test_client()
+
+    # 逐档写入，6..10 档此前会被 400 拒绝
+    for level in range(DE.EMOTION_MIN_LEVEL, DE.EMOTION_MAX_LEVEL + 1):
+        resp = client.post(
+            "/api/diary",
+            json={"emotion_level": level, "study_feeling": "probe"},
+        )
+        assert resp.status_code == 200, (
+            f"emotion_level={level} 被拒（HTTP {resp.status_code}），"
+            "说明校验范围未覆盖 10 级量表"
+        )
+
+    # 越界值仍须拒绝
+    for bad in (0, 11, 99):
+        resp = client.post("/api/diary", json={"emotion_level": bad})
+        assert resp.status_code == 400, f"emotion_level={bad} 未被拒绝"
 
 
 # ==================== B2 情绪量表与标签 ====================

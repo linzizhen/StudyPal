@@ -52,12 +52,19 @@ def add_diary_entry():
     diary = get_diary()
     data = request.json or {}
 
-    emotion_level = data.get('emotion_level', 3)
-    # 验证情绪等级范围
-    if not isinstance(emotion_level, int) or not (1 <= emotion_level <= 5):
+    # 默认取量表中位（愉快档），不再硬编码
+    default_level = DiaryEntry.EMOTION_LABELS_DEFAULT_LEVEL
+    emotion_level = data.get('emotion_level', default_level)
+    # 校验范围以 diary 模块声明的量表边界为准，不在此硬编码
+    if not isinstance(emotion_level, int) or not (
+        DiaryEntry.EMOTION_MIN_LEVEL <= emotion_level <= DiaryEntry.EMOTION_MAX_LEVEL
+    ):
         return jsonify({
             'success': False,
-            'error': '情绪等级必须在 1 到 5 之间'
+            'error': (
+                f'情绪等级必须在 {DiaryEntry.EMOTION_MIN_LEVEL} 到 '
+                f'{DiaryEntry.EMOTION_MAX_LEVEL} 之间'
+            )
         }), 400
 
     entry = diary.add_entry(

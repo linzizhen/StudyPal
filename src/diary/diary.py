@@ -121,6 +121,9 @@ DiaryEntry.EMOTION_MAX_LEVEL = max(e["level"] for e in DiaryEntry.EMOTIONS)
 # 等级 -> 标签 映射（routes/diary.py:76 与 src/core/buddy.py:664 都在用它）
 DiaryEntry.EMOTION_LABELS = {e["level"]: e["label"] for e in DiaryEntry.EMOTIONS}
 
+# 默认情绪档（量表中位：愉快），供路由在未传参时使用
+DiaryEntry.EMOTION_LABELS_DEFAULT_LEVEL = 5
+
 
 def emotion_label_for_level(level) -> str:
     """把任意情绪等级（或平均分）安全地转为中文标签。
