@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
   initDiary();
   initChat();
   initSettings();
+  initMemory();
   updateGreeting();
   loadUserName();
   loadGrowth();
@@ -118,6 +119,108 @@ function renderCaring(events) {
     return '<div class="caring-item">' + safe + '</div>';
   }).join('');
   card.style.display = 'block';
+}
+
+// ============================================================
+// 搭子的记忆本
+// ============================================================
+// 记忆写入已在对话链路打通（见 routes/buddy.py 的 _remember_from_chat），
+// 这里把它可视化，让孩子看得到"搭子记住了我什么"。
+function loadMemory(topic) {
+  var url = '/api/buddy/memory';
+  if (topic) url += '?topic=' + encodeURIComponent(topic);
+
+  return fetch(url)
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (!data) {
+        renderMemoryList([]);
+        return;
+      }
+      if (data.type === 'search') {
+        // 搜索返回包装结构：{ data: {...场景}, score, matched_fields }
+        var items = (data.memories || []).map(function(hit) {
+          return hit && hit.data ? hit.data : null;
+        }).filter(Boolean);
+        renderMemoryList(items);
+        return;
+      }
+      updateMemoryStats(data.stats || {});
+      renderMemoryList(data.recent_scenes || []);
+    })
+    .catch(function() { renderMemoryList([]); });
+}
+
+function updateMemoryStats(stats) {
+  setText('memory-count-scenes', stats.scenes || 0);
+  setText('memory-count-notes', stats.profile_notes || 0);
+  setText('memory-count-convs', stats.conversations || 0);
+}
+
+var MEMORY_TYPE_LABEL = {
+  conversation: '聊天',
+  emotion: '心情',
+  milestone: '大事',
+  struggle: '加油',
+  achievement: '成就'
+};
+
+function renderMemoryList(items) {
+  var box = document.getElementById('memory-list');
+  if (!box) return;
+
+  if (!items.length) {
+    box.innerHTML = '<div class="empty-state">还没找到相关的记忆</div>';
+    return;
+  }
+
+  box.innerHTML = items.map(function(m) {
+    var data = m.data || m;
+    var summary = escapeHtml(data.summary || '（没有摘要）');
+    var date = escapeHtml(data.date || '');
+    var kind = data.type || 'conversation';
+    var label = MEMORY_TYPE_LABEL[kind] || '记忆';
+    var tags = (data.tags || []).slice(0, 4).map(function(t) {
+      return '<span class="tag">' + escapeHtml(String(t)) + '</span>';
+    }).join('');
+    var detail = data.details ? escapeHtml(String(data.details).slice(0, 80)) : '';
+    return '<div class="memory-item">' +
+      '<div class="memory-item-head"><span class="memory-kind">' + label +
+      '</span><span class="memory-date">' + date + '</span></div>' +
+      '<div class="memory-summary">' + summary + '</div>' +
+      (detail ? '<div class="memory-detail">' + detail + '</div>' : '') +
+      (tags ? '<div class="memory-tags">' + tags + '</div>' : '') +
+      '</div>';
+  }).join('');
+}
+
+function initMemory() {
+  var searchBtn = document.getElementById('btn-memory-search');
+  var clearBtn = document.getElementById('btn-memory-clear');
+  var input = document.getElementById('memory-search');
+
+  if (searchBtn) {
+    searchBtn.addEventListener('click', function() {
+      var kw = input ? input.value.trim() : '';
+      loadMemory(kw || undefined);
+    });
+  }
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      if (input) input.value = '';
+      loadMemory();
+    });
+  }
+  if (input) {
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        loadMemory(input.value.trim() || undefined);
+      }
+    });
+  }
+
+  loadMemory();
 }
 
 // ============================================================
@@ -182,6 +285,19 @@ function initNavigation() {
     // 进入我的挑战 → 挂载挑战模块（延迟到首次进入，避免无谓请求）
     if (sectionName === 'challenges') {
       mountChallenges();
+    }
+
+    // 进入记忆本 → 刷新记忆（每次进入都拉最新，便于看到刚聊到的内容）
+    if (sectionName === 'memory') {
+      loadMemory();
+    }
+
+    // 进入任务页 / 日记页 → 用服务端数据刷新
+    if (sectionName === 'tasks') {
+      loadTasks();
+    }
+    if (sectionName === 'diary') {
+      loadDiary();
     }
 
     updateRightSidebar(sectionName);
@@ -433,6 +549,128 @@ function initPomodoro() {
 // ============================================================
 // 待办任务
 // ============================================================
+// 任务数据以服务端为准；本地只保留一份镜像用于渲染
+var _tasksCache = [];
+var _tasksFilter = 'all';
+
+function loadTasks() {
+  return fetch('/api/tasks?status=all')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      _tasksCache = (data && data.tasks) || [];
+      renderTasks();
+    })
+    .catch(function() {
+      // 后端不可用时给出提示，但不清空已有列表
+      var list = document.getElementById('task-list');
+      if (list && !_tasksCache.length) {
+        list.innerHTML = '<div class="empty-state">任务加载失败，请稍后重试</div>';
+      }
+    });
+}
+
+function renderTasks() {
+  var list = document.getElementById('task-list');
+  if (!list) return;
+
+  var filtered = _tasksCache.filter(function(t) {
+    var done = t.status === 'completed';
+    if (_tasksFilter === 'pending') return !done;
+    if (_tasksFilter === 'completed') return done;
+    return true;
+  });
+
+  if (!filtered.length) {
+    list.innerHTML = '<div class="empty-state">暂无任务</div>';
+    updateTaskCounts();
+    return;
+  }
+
+  list.innerHTML = filtered.map(function(t) {
+    var done = t.status === 'completed';
+    return '<div class="task-item' + (done ? ' completed' : '') + '" data-id="' +
+      escapeHtml(String(t.id)) + '">' +
+      '<div class="task-checkbox' + (done ? ' checked' : '') + '"></div>' +
+      '<span class="task-text">' + escapeHtml(t.title || '') + '</span>' +
+      '<button class="task-delete">&times;</button></div>';
+  }).join('');
+
+  list.querySelectorAll('.task-checkbox').forEach(function(cb) {
+    cb.addEventListener('click', function() {
+      var el = cb.closest('.task-item');
+      var id = el && el.dataset.id;
+      if (id) completeTask(id);
+    });
+  });
+
+  list.querySelectorAll('.task-delete').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var el = btn.closest('.task-item');
+      var id = el && el.dataset.id;
+      if (id) deleteTask(id);
+    });
+  });
+
+  updateTaskCounts();
+}
+
+function updateTaskCounts() {
+  var pending = _tasksCache.filter(function(t) { return t.status !== 'completed'; }).length;
+  var completed = _tasksCache.filter(function(t) { return t.status === 'completed'; }).length;
+  setText('tasks-pending-count', pending + ' 待完成');
+  setText('tasks-completed-count', completed + ' 已完成');
+}
+
+function createTask(title) {
+  var value = (title || '').trim();
+  if (!value) {
+    showToast('请先填写任务内容');
+    return Promise.resolve();
+  }
+  return fetch('/api/tasks', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: value })
+  })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success) {
+        showToast('任务已添加');
+        return loadTasks();
+      }
+      showToast((data && data.error) || '添加失败');
+    })
+    .catch(function() { showToast('网络异常，任务未保存'); });
+}
+
+function completeTask(id) {
+  return fetch('/api/tasks/' + encodeURIComponent(id) + '/complete', { method: 'POST' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success) {
+        if (data.new_achievements && data.new_achievements.length) {
+          showToast('完成啦！解锁了新成就 🎉');
+        }
+        return loadTasks();
+      }
+      showToast((data && data.error) || '操作失败');
+    })
+    .catch(function() { showToast('网络异常，状态未保存'); });
+}
+
+function deleteTask(id) {
+  return fetch('/api/tasks/' + encodeURIComponent(id), { method: 'DELETE' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success) {
+        showToast('已删除');
+        return loadTasks();
+      }
+      showToast('删除失败');
+    })
+    .catch(function() { showToast('网络异常，未删除'); });
+}
+
 function initTasks() {
   var input = document.getElementById('new-task-input');
   var addBtn = document.getElementById('btn-add-task');
@@ -441,77 +679,18 @@ function initTasks() {
 
   if (!list) return;
 
-  var tasks = [];
-  var currentFilter = 'all';
-
-  function renderTasks() {
-    var filtered = tasks.filter(function(t) {
-      if (currentFilter === 'pending') return !t.completed;
-      if (currentFilter === 'completed') return t.completed;
-      return true;
-    });
-
-    if (filtered.length === 0) {
-      list.innerHTML = '<div class="empty-state">暂无任务</div>';
-      return;
-    }
-
-    list.innerHTML = filtered.map(function(t) {
-      var idx = tasks.indexOf(t);
-      return '<div class="task-item' + (t.completed ? ' completed' : '') + '" data-index="' + idx + '">' +
-        '<div class="task-checkbox' + (t.completed ? ' checked' : '') + '"></div>' +
-        '<span class="task-text">' + escapeHtml(t.text) + '</span>' +
-        '<button class="task-delete">&times;</button></div>';
-    }).join('');
-
-    list.querySelectorAll('.task-checkbox').forEach(function(cb) {
-      cb.addEventListener('click', function() {
-        var el = cb.closest('.task-item');
-        var idx = parseInt(el.dataset.index, 10);
-        if (!tasks[idx]) return;
-        tasks[idx].completed = !tasks[idx].completed;
-        renderTasks();
-        updateCounts();
-      });
-    });
-
-    list.querySelectorAll('.task-delete').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var el = btn.closest('.task-item');
-        var idx = parseInt(el.dataset.index, 10);
-        if (!tasks[idx]) return;
-        tasks.splice(idx, 1);
-        renderTasks();
-        updateCounts();
+  if (addBtn) {
+    addBtn.addEventListener('click', function() {
+      createTask(input ? input.value : '').then(function() {
+        if (input) input.value = '';
       });
     });
   }
-
-  function updateCounts() {
-    var pending = tasks.filter(function(t) { return !t.completed; }).length;
-    var completed = tasks.filter(function(t) { return t.completed; }).length;
-    var pEl = document.getElementById('tasks-pending-count');
-    var cEl = document.getElementById('tasks-completed-count');
-    if (pEl) pEl.textContent = pending + ' 待完成';
-    if (cEl) cEl.textContent = completed + ' 已完成';
-  }
-
-  function addTask(text) {
-    var value = (text || '').trim();
-    if (!value) return;
-    tasks.push({ text: value, completed: false });
-    renderTasks();
-    updateCounts();
-  }
-
-  if (addBtn) addBtn.addEventListener('click', function() {
-    addTask(input ? input.value : '');
-  });
   if (input) {
     input.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') {
-        addTask(input.value);
-        input.value = '';
+        e.preventDefault();
+        createTask(input.value).then(function() { input.value = ''; });
       }
     });
   }
@@ -520,17 +699,115 @@ function initTasks() {
     tab.addEventListener('click', function() {
       tabs.forEach(function(t) { t.classList.remove('active'); });
       tab.classList.add('active');
-      currentFilter = tab.dataset.filter || 'all';
+      _tasksFilter = tab.dataset.filter || 'all';
       renderTasks();
     });
   });
 
-  renderTasks();
+  // 从服务端加载真实任务
+  loadTasks();
 }
 
 // ============================================================
-// 学习日记
+// 学习日记（数据以服务端为准）
 // ============================================================
+var _diaryEntries = [];
+var _currentMoodLevel = 5;   // 默认"愉快"档，对应后端 10 档量表
+
+function loadDiary() {
+  return fetch('/api/diary?limit=20')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      _diaryEntries = (data && data.entries) || [];
+      renderDiaryList();
+    })
+    .catch(function() {});
+
+  function renderDiaryList() {
+    var box = document.getElementById('diary-list');
+    if (!box) return;
+    if (!_diaryEntries.length) {
+      box.innerHTML = '<div class="empty-state">还没有日记，写下今天的心情吧</div>';
+      return;
+    }
+    box.innerHTML = _diaryEntries.map(function(e) {
+      var id = escapeHtml(String(e.id));
+      var label = escapeHtml(e.emotion_label || '');
+      var date = escapeHtml(e.date || '');
+      var text = escapeHtml(e.biggest_event || e.study_feeling || '');
+      return '<div class="diary-item" data-id="' + id + '">' +
+        '<div class="diary-item-head"><span class="diary-date">' + date +
+        '</span><span class="diary-mood">' + label + '</span></div>' +
+        '<div class="diary-item-text">' + text + '</div>' +
+        '<button class="diary-delete" title="删除">&times;</button></div>';
+    }).join('');
+
+    box.querySelectorAll('.diary-delete').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var el = btn.closest('.diary-item');
+        if (el && el.dataset.id) deleteDiary(el.dataset.id);
+      });
+    });
+  }
+}
+
+function saveDiary() {
+  var titleEl = document.getElementById('diary-title');
+  var contentEl = document.getElementById('diary-content');
+  var eventEl = document.getElementById('diary-biggest-event');
+  var wordsEl = document.getElementById('diary-words-to-buddy');
+
+  var content = contentEl ? contentEl.textContent.trim() : '';
+  var title = titleEl ? titleEl.value.trim() : '';
+  var event = eventEl ? eventEl.value.trim() : '';
+  var words = wordsEl ? wordsEl.value.trim() : '';
+
+  if (!content && !title && !event) {
+    showToast('写点什么再保存吧');
+    return Promise.resolve();
+  }
+
+  var payload = {
+    emotion_level: _currentMoodLevel,
+    study_feeling: title,
+    biggest_event: event || content || title,
+    words_to_buddy: words
+  };
+
+  return fetch('/api/diary', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success) {
+        showToast(data.buddy_caring ? '日记已保存，搭子有话对你说' : '日记已保存');
+        if (titleEl) titleEl.value = '';
+        if (contentEl) contentEl.textContent = '';
+        if (eventEl) eventEl.value = '';
+        if (wordsEl) wordsEl.value = '';
+        setText('diary-word-count', '0 字');
+        return loadDiary();
+      }
+      showToast((data && data.error) || '保存失败');
+    })
+    .catch(function() { showToast('网络异常，日记未保存'); });
+}
+
+function deleteDiary(id) {
+  return fetch('/api/diary/' + encodeURIComponent(id), { method: 'DELETE' })
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      if (data && data.success) {
+        showToast('已删除');
+        return loadDiary();
+      }
+      showToast('删除失败');
+    })
+    .catch(function() { showToast('网络异常，未删除'); });
+}
+
 function initDiary() {
   var saveBtn = document.getElementById('btn-save-diary');
   var contentEl = document.getElementById('diary-content');
@@ -540,25 +817,12 @@ function initDiary() {
   var moodBtns = document.querySelectorAll('.mood-btn');
 
   if (saveBtn) {
-    saveBtn.addEventListener('click', function() {
-      var title = document.getElementById('diary-title');
-      var body = contentEl ? contentEl.textContent.trim() : '';
-      if (!body) {
-        showToast('日记内容不能为空');
-        return;
-      }
-      showToast('日记已保存！');
-      if (title) title.value = '';
-      if (contentEl) contentEl.textContent = '';
-      if (wordCountEl) wordCountEl.textContent = '0 字';
-      if (tagList) tagList.innerHTML = '';
-    });
+    saveBtn.addEventListener('click', function() { saveDiary(); });
   }
 
   if (contentEl) {
     contentEl.addEventListener('input', function() {
-      var count = contentEl.textContent.length;
-      if (wordCountEl) wordCountEl.textContent = count + ' 字';
+      if (wordCountEl) wordCountEl.textContent = contentEl.textContent.length + ' 字';
     });
   }
 
@@ -579,16 +843,33 @@ function initDiary() {
     if (!tagList) return;
     var chip = document.createElement('span');
     chip.className = 'tag-chip';
-    chip.innerHTML = escapeHtml(text) + ' <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>';
+    chip.innerHTML = escapeHtml(text) +
+      ' <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>';
     tagList.appendChild(chip);
   }
 
+  // 情绪按钮：读 data-level 并记为待提交的情绪档位
   moodBtns.forEach(function(btn) {
     btn.addEventListener('click', function() {
       moodBtns.forEach(function(b) { b.classList.remove('selected'); });
       btn.classList.add('selected');
+      var level = parseInt(btn.dataset.level, 10);
+      if (!isNaN(level)) _currentMoodLevel = level;
     });
   });
+
+  // 默认选中中位档
+  if (moodBtns.length) {
+    var selected = document.querySelector('.mood-btn.selected');
+    if (!selected) {
+      var mid = moodBtns[Math.floor(moodBtns.length / 2)];
+      mid.classList.add('selected');
+      var lv = parseInt(mid.dataset.level, 10);
+      if (!isNaN(lv)) _currentMoodLevel = lv;
+    }
+  }
+
+  loadDiary();
 }
 
 // ============================================================

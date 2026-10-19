@@ -88,6 +88,15 @@ def add_diary_entry():
     return jsonify(response)
 
 
+@diary_bp.route('/<entry_id>', methods=['DELETE'])
+def delete_diary_entry(entry_id):
+    """删除指定日记"""
+    diary = get_diary()
+    if diary.delete_entry(entry_id):
+        return jsonify({'success': True, 'message': '已删除'})
+    return jsonify({'success': False, 'error': '日记不存在'}), 404
+
+
 @diary_bp.route('/emotions', methods=['GET'])
 def get_emotion_curve():
     """获取情绪曲线"""
