@@ -9,6 +9,7 @@ StudyPal 认证模块（轻量版）
 import json
 import os
 import time
+import hmac
 import secrets
 import hashlib
 from datetime import datetime, timedelta
@@ -43,32 +44,160 @@ def _save_users(users):
         json.dump(users, f, ensure_ascii=False, indent=2, default=str)
 
 
+# ==================== 密码哈希 ====================
+#
+# 存储格式：pbkdf2_sha256$<迭代次数>$<盐(hex)>$<派生密钥(hex)>
+#
+# 历史上用的是无盐 SHA-256，已被彩虹表攻破（sha256("123456") 是公开已知值）。
+# 现在改为 PBKDF2-HMAC-SHA256 + 每用户随机盐。为不打断存量用户登录，
+# _verify_password 仍兼容旧格式，并在登录成功后把旧哈希就地升级为新格式。
+
+_HASH_ALGORITHM = "pbkdf2_sha256"
+_HASH_ITERATIONS = 200_000
+_LEGACY_HEX_LENGTH = 64
+
+
 def _hash_password(password: str) -> str:
-    """哈希密码"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """生成加盐哈希。
+
+    返回形如 ``pbkdf2_sha256$200000$<salt>$<digest>`` 的字符串。
+    """
+    salt = secrets.token_hex(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        bytes.fromhex(salt),
+        _HASH_ITERATIONS,
+    )
+    return f"{_HASH_ALGORITHM}${_HASH_ITERATIONS}${salt}${digest.hex()}"
 
 
-def _generate_token(user_id: int) -> str:
-    """生成简单 Token"""
+def _is_legacy_hash(stored: str) -> bool:
+    """判断是否为旧版无盐 SHA-256 哈希（64 位十六进制）。"""
+    if not stored or not isinstance(stored, str):
+        return False
+    if stored.startswith(_HASH_ALGORITHM + "$"):
+        return False
+    if len(stored) != _LEGACY_HEX_LENGTH:
+        return False
+    try:
+        int(stored, 16)
+    except ValueError:
+        return False
+    return True
+
+
+def _verify_password(password: str, stored: str) -> bool:
+    """校验密码，兼容旧版无盐哈希。
+
+    使用定时安全比较，避免通过响应时间侧信道推断哈希。
+    """
+    if not password or not stored or not isinstance(stored, str):
+        return False
+
+    if stored.startswith(_HASH_ALGORITHM + "$"):
+        parts = stored.split("$")
+        if len(parts) != 4:
+            return False
+        _, iterations, salt, expected = parts
+        try:
+            digest = hashlib.pbkdf2_hmac(
+                "sha256",
+                password.encode("utf-8"),
+                bytes.fromhex(salt),
+                int(iterations),
+            )
+        except (ValueError, TypeError):
+            return False
+        return secrets.compare_digest(digest.hex(), expected)
+
+    if _is_legacy_hash(stored):
+        legacy = hashlib.sha256(password.encode("utf-8")).hexdigest()
+        return secrets.compare_digest(legacy, stored.lower())
+
+    return False
+
+
+def _get_signing_key() -> bytes:
+    """获取 token 签名密钥。
+
+    优先级：环境变量 SECRET_KEY > 本地持久化密钥文件 > 新生成并落盘。
+
+    必须持久化：若每次启动都随机生成，进程重启后所有已签发 token 立即失效。
+    """
+    import os as _os
+
+    env_secret = _os.getenv('SECRET_KEY')
+    if env_secret:
+        return env_secret.encode('utf-8')
+
+    key_file = _os.path.join(DATA_DIR, '.signing_key')
+    try:
+        if _os.path.exists(key_file):
+            with open(key_file, 'rb') as handle:
+                key = handle.read().strip()
+            if key:
+                return key
+        _ensure_data_dir()
+        key = secrets.token_bytes(32)
+        with open(key_file, 'wb') as handle:
+            handle.write(key)
+        try:
+            _os.chmod(key_file, 0o600)
+        except OSError:
+            pass
+        return key
+    except OSError:
+        # 极端情况下无法落盘：退化为进程内临时密钥（仅当次运行有效）
+        return secrets.token_bytes(32)
+
+
+def _sign_payload(payload: str) -> str:
+    """用 HMAC-SHA256 对 payload 签名，返回 ``<签名>.<payload>``。"""
+    signature = hmac.new(
+        _get_signing_key(), payload.encode('utf-8'), hashlib.sha256
+    ).hexdigest()
+    return f"{signature}.{payload}"
+
+
+def _generate_token(user_id: int, ttl_seconds: int = 86400) -> str:
+    """生成带 HMAC 签名的 Token。
+
+    payload 形如 ``<user_id>:<签发时间戳>:<随机数>``，签名绑定整段 payload，
+    因此改动 user_id 或时间戳都会导致签名校验失败。
+    """
     payload = f"{user_id}:{int(time.time())}:{secrets.token_hex(8)}"
-    return secrets.token_hex(16) + '.' + payload
+    return _sign_payload(payload)
 
 
 def _verify_token(token: str):
-    """验证 Token"""
+    """验证 Token：先校验 HMAC 签名，再校验有效期。
+
+    返回 user_id；任何异常情况（格式错误、签名不符、已过期）一律返回 None。
+    """
+    if not token or not isinstance(token, str):
+        return None
     try:
-        parts = token.split('.')
-        if len(parts) < 2:
+        signature, separator, payload = token.partition('.')
+        if not separator or not signature or not payload:
             return None
-        # 前16位hex作为签名
-        payload = '.'.join(parts[1:])
-        user_id = int(payload.split(':')[0])
-        ts = int(payload.split(':')[1])
-        # Token 有效期 24 小时
-        if time.time() - ts > 86400:
+
+        expected = hmac.new(
+            _get_signing_key(), payload.encode('utf-8'), hashlib.sha256
+        ).hexdigest()
+        # 定时安全比较，避免签名校验的时序侧信道
+        if not secrets.compare_digest(signature, expected):
+            return None
+
+        fields = payload.split(':')
+        if len(fields) < 2:
+            return None
+        user_id = int(fields[0])
+        issued_at = int(fields[1])
+        if time.time() - issued_at > 86400:
             return None
         return user_id
-    except:
+    except (ValueError, TypeError, AttributeError):
         return None
 
 
@@ -134,11 +263,15 @@ class AuthService:
             return False, '邮箱或密码错误', None, None
 
         user = users[email]
-        if user['password_hash'] != _hash_password(password):
+        if not _verify_password(password, user.get('password_hash', '')):
             return False, '邮箱或密码错误', None, None
 
         if not user.get('is_active', True):
             return False, '账号已被禁用', None, None
+
+        # 存量用户仍在使用无盐 SHA-256：登录成功后就地升级为加盐哈希
+        if _is_legacy_hash(user.get('password_hash', '')):
+            user['password_hash'] = _hash_password(password)
 
         user['last_active'] = datetime.now().isoformat()
         _save_users(users)

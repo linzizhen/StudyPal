@@ -53,3 +53,6 @@ data/*.json
 *.sqlite3
 
 .cursor/
+src/data/
+.pytest-tmp/
+.pytest-data-backup/
