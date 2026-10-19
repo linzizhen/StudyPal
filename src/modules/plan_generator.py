@@ -261,13 +261,13 @@ class PlanGenerator:
                 "focus": "重点复习核心内容",
                 "tasks": [
                     f"复习{subject}核心知识点",
-                    "做历年真题",
+                    "做一套单元练习题",
                     "整理错题集"
                 ]
             }]
         elif days_remaining <= 3:
             plan.tasks = [{
-                "phase": "冲刺阶段",
+                "phase": "考前复习",
                 "duration": days_remaining,
                 "focus": "重点突破",
                 "tasks": [
@@ -289,11 +289,11 @@ class PlanGenerator:
                     ]
                 },
                 {
-                    "phase": "强化训练",
+                    "phase": "巩固练习",
                     "duration": max(1, days_remaining - days_remaining // 2),
                     "focus": "做题巩固",
                     "tasks": [
-                        "做历年真题",
+                        "做一套单元练习题",
                         "整理错题",
                         "查漏补缺"
                     ]
@@ -317,7 +317,7 @@ class PlanGenerator:
                     ]
                 },
                 {
-                    "phase": "强化阶段",
+                    "phase": "深入练习",
                     "duration": phase2_days,
                     "focus": "深入理解和练习",
                     "tasks": [
@@ -327,12 +327,12 @@ class PlanGenerator:
                     ]
                 },
                 {
-                    "phase": "冲刺阶段",
+                    "phase": "考前复习",
                     "duration": phase3_days,
-                    "focus": "模拟测试和查漏补缺",
+                    "focus": "综合练习和查漏补缺",
                     "tasks": [
-                        "做历年真题",
-                        "模拟考试",
+                        "做一套单元练习题",
+                        "做一套综合练习",
                         "复习错题集"
                     ]
                 }
