@@ -68,6 +68,7 @@ document.addEventListener('DOMContentLoaded', function() {
   updateGreeting();
   loadUserName();
   loadGrowth();
+  loadCaring();
 });
 
 // 把昵称填充到侧栏与问候语
@@ -75,6 +76,48 @@ function applyUserName(name) {
   if (!name) return;
   setText('sidebar-user-name', name);
   updateGreeting();
+}
+
+// ============================================================
+// 搭子的主动关心
+// ============================================================
+// 关心事件由后端按冷却规则产生（早安、学习提醒、情绪关怀、成就庆祝等）。
+// 此前前端从不调用该接口，搭子的"主动关心"孩子在界面上看不到。
+function loadCaring() {
+  fetch('/api/buddy/caring')
+    .then(function(r) { return r.ok ? r.json() : null; })
+    .then(function(data) {
+      renderCaring((data && data.events) || []);
+    })
+    .catch(function() { renderCaring([]); });
+}
+
+function renderCaring(events) {
+  var card = document.getElementById('caring-card');
+  var box = document.getElementById('caring-messages');
+  if (!card || !box) return;
+
+  if (!events.length) {
+    // 没有关心事件时不占版面
+    card.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  // 高优先级排在前面，最多显示 3 条，避免刷屏
+  var order = { high: 0, normal: 1, low: 2 };
+  var sorted = events.slice().sort(function(a, b) {
+    return (order[a.priority] === undefined ? 1 : order[a.priority])
+         - (order[b.priority] === undefined ? 1 : order[b.priority]);
+  });
+
+  box.innerHTML = sorted.slice(0, 3).map(function(e) {
+    var safe = String(e.message || '').replace(/[<>&]/g, function(ch) {
+      return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[ch];
+    });
+    return '<div class="caring-item">' + safe + '</div>';
+  }).join('');
+  card.style.display = 'block';
 }
 
 // ============================================================

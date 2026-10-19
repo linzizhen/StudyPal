@@ -162,6 +162,12 @@
                 <input type="text" placeholder="今天想学点什么？" id="search-input">
             </div>
 
+            <!-- 搭子的主动关心：由 /api/buddy/caring 填充，无内容时自动隐藏 -->
+            <div class="card" id="caring-card" style="display: none;">
+                <div class="card-header-title">💬 搭子来找你啦</div>
+                <div id="caring-messages"></div>
+            </div>
+
             <div class="stats-row">
                 <div class="stat-card">
                     <div class="stat-icon">⏱️</div>

@@ -12,10 +12,13 @@ StudyPal 主动关心引擎
 日期：2026-04-27
 """
 
+import os
 import random
 from datetime import datetime, timedelta
 from typing import Dict, Any, List, Optional
+from config import CARING_STATE_FILE
 from src.ai.prompt_templates import get_prompt_templates
+from src.utils.file_lock import atomic_read_json, atomic_write_json
 
 
 class CaringEvent:
@@ -155,12 +158,70 @@ class CaringEngine:
         self._diary_tracker = None
         self._memory = None
         self._last_phase: Optional[str] = None  # 上一阶段
+        # 冷却状态落盘位置：不持久化的话，每次重启都会把全部关心
+        # 重新触发一遍（例如早上开机连发多条问候）
+        self.state_file = CARING_STATE_FILE
+        self._load_state()
 
     def set_trackers(self, study_tracker=None, diary_tracker=None, memory=None):
-        """设置数据追踪器"""
+        """设置数据追踪器
+
+        关心引擎需要这些追踪器来判断"是否长时间没学习""今天写日记了吗"
+        "孩子最近情绪如何"，缺了它们多数关心规则无法评估。
+        """
         self._study_tracker = study_tracker
         self._diary_tracker = diary_tracker
         self._memory = memory
+
+    # ========== 冷却状态持久化 ==========
+
+    def _load_state(self):
+        """从文件恢复冷却状态；文件缺失或损坏时安全降级为空。"""
+        try:
+            data = atomic_read_json(self.state_file, {}) or {}
+        except Exception:
+            data = {}
+        raw = data.get("cooldowns", {}) if isinstance(data, dict) else {}
+        restored: Dict[str, datetime] = {}
+        for key, value in (raw or {}).items():
+            if not isinstance(value, str):
+                continue
+            try:
+                restored[key] = datetime.fromisoformat(value)
+            except (ValueError, TypeError):
+                continue
+        self.cooldowns = restored
+        phase = data.get("last_phase") if isinstance(data, dict) else None
+        if isinstance(phase, str):
+            self._last_phase = phase
+
+    def _save_state(self):
+        """保存冷却状态；失败时不影响主流程，但留下可诊断的痕迹。
+
+        注意：此处若把不可序列化的对象（例如非标准 datetime 子类）写进去，
+        json 会抛 TypeError。之前这类错误被完全静默吞掉，导致冷却状态
+        悄悄丢失且无从察觉，因此这里至少记录一条警告。
+        """
+        try:
+            atomic_write_json(self.state_file, {
+                "cooldowns": {
+                    key: value.isoformat()
+                    for key, value in self.cooldowns.items()
+                    if isinstance(value, datetime)
+                },
+                "last_phase": self._last_phase,
+                "updated_at": datetime.now().isoformat(),
+            })
+        except Exception as exc:  # noqa: BLE001
+            # 冷却丢失只影响关心频率，不应打断主流程；但要能查出来
+            try:
+                import logging
+                logging.getLogger(__name__).warning(
+                    "关心冷却状态保存失败（不影响主流程）：%s: %s",
+                    type(exc).__name__, exc,
+                )
+            except Exception:
+                pass
 
     def _check_cooldown(self, caring_type: str) -> bool:
         """
@@ -181,13 +242,17 @@ class CaringEngine:
             return True
 
         last_time = self.cooldowns[caring_type]
+        # 兼容从文件恢复时可能出现的非 datetime 值
+        if not isinstance(last_time, datetime):
+            return True
         elapsed = (datetime.now() - last_time).total_seconds() / 3600
 
         return elapsed >= cooldown_hours
 
     def _set_cooldown(self, caring_type: str):
-        """设置关心冷却"""
+        """设置关心冷却并落盘"""
         self.cooldowns[caring_type] = datetime.now()
+        self._save_state()
 
     def _get_random_message(self, caring_type: str, sub_key: str = None) -> str:
         """获取随机关心的消息"""

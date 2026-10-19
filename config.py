@@ -245,3 +245,9 @@ AI_HISTORY_FILE = "data/ai_history.json"
 
 # 成就数据文件路径
 ACHIEVEMENTS_FILE = "data/achievements.json"
+
+# ==================== 主动关心配置 ====================
+
+# 关心冷却状态文件路径
+# 必须持久化：否则进程重启后冷却清空，会把全部关心重新触发一遍
+CARING_STATE_FILE = "data/caring_state.json"
