@@ -268,7 +268,7 @@ class Buddy:
         # 提取关键词
         keywords = []
         for kw in negative_keywords + positive_keywords + ["数学", "英语", "政治",
-                    "专业课", "高数", "线代", "概率", "单词", "政治", "真题"]:
+                    "语文", "数学", "英语", "科学", "物理", "化学", "生字", "单词", "应用题"]:
             if kw in message_lower:
                 keywords.append(kw)
 
@@ -509,11 +509,12 @@ class Buddy:
         """从对话中提取并记录重要记忆"""
         message_lower = message.lower()
 
-        # 检测是否提到具体科目或章节
+        # 检测是否提到具体科目或章节（小学到初中常见科目）
         subject_keywords = {
-            "高数": "高数", "数学": "高数", "线代": "线代", "概率": "概率论",
-            "英语": "英语", "单词": "英语", "政治": "政治",
-            "专业课": "专业课", "408": "专业课"
+            "语文": "语文", "作文": "语文", "生字": "语文", "古诗": "语文",
+            "数学": "数学", "应用题": "数学", "口算": "数学", "几何": "数学",
+            "英语": "英语", "单词": "英语", "听力": "英语",
+            "物理": "物理", "化学": "化学", "科学": "科学",
         }
 
         mentioned_subjects = [v for k, v in subject_keywords.items() if k in message_lower]
@@ -535,7 +536,7 @@ class Buddy:
         # 检测重要意图
         if "目标" in message or "想考" in message:
             self.memory.add_scene(
-                summary=f"讨论了考研目标",
+                summary=f"聊到了学习目标",
                 scene_type="conversation",
                 details=message[:100],
                 tags=["目标"]

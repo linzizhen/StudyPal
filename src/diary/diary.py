@@ -141,7 +141,7 @@ def emotion_label_for_level(level) -> str:
 
 
 class Diary:
-    """考研日记类 - 管理用户的情绪记录和日记"""
+    """StudyPal 日记类 - 管理孩子的情绪记录和日记"""
     
     def __init__(self, data_file: str = "data/diary.json"):
         self.data_file = data_file

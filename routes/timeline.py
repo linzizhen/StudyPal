@@ -1,6 +1,6 @@
 """
 StudyPal 时间线路由
-处理考研历程时间线相关 API
+处理成长时间线相关 API
 """
 
 from flask import Blueprint, jsonify, request

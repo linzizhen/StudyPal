@@ -33,12 +33,11 @@ def get_home_data():
             'streak_days': user.get('current_streak', 0) if user else 0,
         },
         'profile': {
-            'is_setup': bool(user.get('target_school')) if user else False,
+            'is_setup': bool(user.get('grade_mode')) if user else False,
             'user': {
-                'name': user.get('nickname', '考研战士') if user else '游客',
-                'target_school': user.get('target_school'),
-                'target_major': user.get('target_major'),
-                'target_score': user.get('target_score'),
+                'name': user.get('nickname', '小同学') if user else '游客',
+                'grade_mode': user.get('grade_mode', 'middle') if user else 'middle',
+                'study_goal': user.get('study_goal', '') if user else '',
             }
         },
         'diary': {

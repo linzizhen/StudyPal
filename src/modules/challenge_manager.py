@@ -33,9 +33,9 @@ if not _config_loaded:
 CHALLENGE_DATA_FILE = os.path.join(DATA_DIR, "challenges.json")
 USER_SETTINGS_FILE = os.path.join(DATA_DIR, "user_settings.json")
 
-# 学段预设配置
-GRADE_MODES = ["primary", "middle", "high"]
-GRADE_LABELS = {"primary": "小学", "middle": "初中", "high": "高中"}
+# 学段预设配置（产品定位：小学到初中，不含高中）
+GRADE_MODES = ["primary", "middle"]
+GRADE_LABELS = {"primary": "小学", "middle": "初中"}
 
 # 学段默认学科模板
 DEFAULT_SUBJECTS = {
@@ -46,19 +46,11 @@ DEFAULT_SUBJECTS = {
         {"name": "科学秘境", "icon": "🔬", "full_score": 100, "display_mode": "star"},
     ],
     "middle": [
-        {"name": "语文", "icon": "📝", "full_score": 150, "display_mode": "star"},
-        {"name": "数学", "icon": "🔢", "full_score": 150, "display_mode": "star"},
-        {"name": "英语", "icon": "🌍", "full_score": 150, "display_mode": "star"},
+        {"name": "语文", "icon": "📝", "full_score": 120, "display_mode": "star"},
+        {"name": "数学", "icon": "🔢", "full_score": 120, "display_mode": "star"},
+        {"name": "英语", "icon": "🌍", "full_score": 120, "display_mode": "star"},
         {"name": "物理", "icon": "⚛️", "full_score": 100, "display_mode": "star"},
         {"name": "化学", "icon": "🧪", "full_score": 100, "display_mode": "star"},
-    ],
-    "high": [
-        {"name": "语文", "icon": "📝", "full_score": 150, "display_mode": "score"},
-        {"name": "数学", "icon": "🔢", "full_score": 150, "display_mode": "score"},
-        {"name": "英语", "icon": "🌍", "full_score": 150, "display_mode": "score"},
-        {"name": "物理", "icon": "⚛️", "full_score": 100, "display_mode": "score"},
-        {"name": "化学", "icon": "🧪", "full_score": 100, "display_mode": "score"},
-        {"name": "生物", "icon": "🧬", "full_score": 100, "display_mode": "score"},
     ],
 }
 
@@ -373,39 +365,39 @@ class ChallengeManager:
     # ============ 数据迁移 ============
 
     def migrate_from_user_settings(self):
-        """从旧版 user_settings.json 迁移考研目标数据"""
+        """从旧版 user_settings.json 迁移学习目标数据（小学到初中）
+
+        旧版本里这个函数把历史目标硬编码成"考研冲刺 / 考研日期"，与
+        现在的小学初中定位不符。改为按用户当前学段生成对应挑战，
+        不再出现任何考研语境。
+        """
         if not os.path.exists(USER_SETTINGS_FILE):
             return {"migrated": False, "reason": "user_settings.json 不存在"}
 
         old_data = atomic_read_json(USER_SETTINGS_FILE, {})
         old_goal = old_data.get("exam_goal") or old_data.get("goal") or {}
         if not old_goal:
-            return {"migrated": False, "reason": "旧数据中没有考研目标"}
+            return {"migrated": False, "reason": "旧数据中没有学习目标"}
 
         # 如果已有挑战，不重复迁移
         if self.data.get("challenges"):
             return {"migrated": False, "reason": "挑战数据已存在，跳过迁移"}
 
-        # 构建迁移后的挑战（标记为高中考研场景）
-        school = old_goal.get("school", "")
-        major = old_goal.get("major", "")
+        grade_mode = self.get_grade_mode()
+        if grade_mode not in GRADE_MODES:
+            grade_mode = "middle"
+
         target_score = old_goal.get("target_score", 0)
         exam_date = old_goal.get("exam_date", "")
-
-        description_parts = []
-        if school:
-            description_parts.append(f"目标院校：{school}")
-        if major:
-            description_parts.append(f"目标专业：{major}")
-        description = " / ".join(description_parts) if description_parts else "从旧数据迁移"
+        goal_name = old_goal.get("name") or "我的学习目标"
 
         new_challenge = {
             "id": f"ch_mig_{uuid.uuid4().hex[:8]}",
-            "name": f"{old_goal.get('name', '考研冲刺')}",
-            "grade_mode": "high",
-            "type": "考研",
+            "name": goal_name,
+            "grade_mode": grade_mode,
+            "type": "学习",
             "deadline": exam_date or "",
-            "description": description,
+            "description": "从旧数据迁移的学习目标",
             "status": "active",
             "created_at": datetime.now().strftime("%Y-%m-%d"),
             "subjects": [
@@ -413,44 +405,44 @@ class ChallengeManager:
                     "id": f"sub_mig_{uuid.uuid4().hex[:8]}",
                     "name": "总分",
                     "icon": "🎯",
-                    "display_mode": "score",
-                    "target_score": target_score or 380,
-                    "full_score": 500,
+                    "display_mode": "star" if grade_mode == "primary" else "score",
+                    "target_score": target_score or 0,
+                    "full_score": 100,
                     "current_score": 0,
                     "current_level": 0,
-                    "max_level": 0,
+                    "max_level": 5 if grade_mode == "primary" else 10,
                     "scores_history": [],
                     "weak_points": [],
-                    "notes": "已从旧版考研目标迁移",
+                    "notes": "已从旧版学习目标迁移",
                 }
             ],
             "milestones": [
                 {
                     "id": f"ms_mig_{uuid.uuid4().hex[:8]}",
                     "name": "目标分数",
-                    "value": target_score or 380,
-                    "full_score": 500,
+                    "value": target_score or 0,
+                    "full_score": 100,
                     "type": "custom",
-                    "comparison_text": f"目标：{target_score or 380} 分",
+                    "comparison_text": f"目标：{target_score or 0} 分",
                     "visible": True,
                 }
             ] if target_score else [],
             "timeline": [
                 {
                     "id": f"tl_mig_{uuid.uuid4().hex[:8]}",
-                    "name": "考研日期",
+                    "name": "目标日期",
                     "date": exam_date or "",
                     "type": "exam",
-                    "icon": "🎓",
+                    "icon": "🎯",
                     "completed": False,
-                    "urgency": "high",
+                    "urgency": "normal",
                 }
             ] if exam_date else [],
         }
 
         self.data["challenges"].append(new_challenge)
         self.data["active_challenge_id"] = new_challenge["id"]
-        self.data["user_grade_mode"] = "high"
+        self.data["user_grade_mode"] = grade_mode
         self._save_data()
         return {"migrated": True, "challenge_id": new_challenge["id"]}
 

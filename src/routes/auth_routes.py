@@ -23,11 +23,9 @@ def _user_to_dict(user):
         'subscription_tier': user.get('subscription_tier'),
         'is_pro': user.get('subscription_tier') in ['pro', 'vip'],
         'is_vip': user.get('subscription_tier') == 'vip',
-        'target_school': user.get('target_school'),
-        'target_major': user.get('target_major'),
-        'target_score': user.get('target_score'),
-        'exam_date': user.get('exam_date'),
-        'daily_goal_hours': user.get('daily_goal_hours'),
+        'grade_mode': user.get('grade_mode', 'middle'),
+        'study_goal': user.get('study_goal', ''),
+        'daily_goal_minutes': user.get('daily_goal_minutes', 60),
         'current_role_id': user.get('current_role_id'),
         'custom_buddy_name': user.get('custom_buddy_name'),
         'theme': user.get('theme'),
@@ -105,9 +103,8 @@ def update_me():
     data = request.json or {}
 
     updateable = [
-        'nickname', 'avatar', 'theme', 'target_school', 'target_major',
-        'target_score', 'exam_date', 'daily_goal_hours', 'current_role_id',
-        'custom_buddy_name'
+        'nickname', 'avatar', 'theme', 'grade_mode', 'study_goal',
+        'daily_goal_minutes', 'current_role_id', 'custom_buddy_name'
     ]
     updates = {}
     for field in updateable:

@@ -3,9 +3,8 @@ StudyPal 搭子档案模块
 管理用户档案和搭子基本信息
 
 包含：
-- 用户考研目标信息
+- 孩子的学习信息（昵称、学段、学习目标）
 - 搭子基本信息（名字、性格设定）
-- 备考阶段管理
 
 作者：StudyPal
 日期：2026-04-27
@@ -29,12 +28,12 @@ class BuddyProfile:
     DEFAULT_DATA = {
         "user": {
             "name": "",
-            "target_school": "",
-            "target_major": "",
-            "target_score": 0,
-            "exam_date": "",
+            # 学段：primary（小学）/ middle（初中）
+            "grade_mode": "middle",
+            # 学习目标：想达到的水平（替代旧版的院校/分数线）
+            "study_goal": "",
             "study_type": "normal",
-            "daily_goal_hours": 8,
+            "daily_goal_minutes": 60,
             "weak_subjects": [],
             "strong_subjects": [],
             "created_at": ""
@@ -43,7 +42,7 @@ class BuddyProfile:
             "name": "小豆",
             "emoji": "🌸",
             "personality": "温柔但有原则",
-            "introduction": "我是小豆，会陪你走完这段考研路",
+            "introduction": "我是小豆，会陪你一起把功课变简单",
             "role_id": "xiaodou",
             "level": 1,
             "custom_name": None,
@@ -63,6 +62,21 @@ class BuddyProfile:
         self.data = data
         if "user" not in self.data:
             self.data["user"] = self.DEFAULT_DATA["user"].copy()
+        else:
+            # 旧数据字段迁移：考研向字段（target_school/target_major/
+            # target_score/exam_date）已废弃，统一转为学段 + 学习目标。
+            user = self.data["user"]
+            defaults = self.DEFAULT_DATA["user"]
+            user.setdefault("grade_mode", defaults["grade_mode"])
+            user.setdefault("study_goal", defaults["study_goal"])
+            user.setdefault("study_type", defaults["study_type"])
+            user.setdefault("daily_goal_minutes", defaults["daily_goal_minutes"])
+            user.setdefault("weak_subjects", [])
+            user.setdefault("strong_subjects", [])
+            user.setdefault("created_at", "")
+            for obsolete in ("target_school", "target_major",
+                             "target_score", "exam_date", "daily_goal_hours"):
+                user.pop(obsolete, None)
         if "buddy" not in self.data:
             self.data["buddy"] = self.DEFAULT_DATA["buddy"].copy()
         else:
@@ -92,10 +106,8 @@ class BuddyProfile:
             profile["user"]["ai_model_key"] = db_user["ai_model_key"]
             profile["user"]["ai_custom_config"] = db_user["ai_custom_config"]
             profile["user"]["current_role_id"] = db_user.get("current_role_id")
-            profile["user"]["daily_goal_hours"] = db_user.get("daily_goal_hours")
-            profile["user"]["target_school"] = db_user.get("target_school")
-            profile["user"]["target_major"] = db_user.get("target_major")
-            profile["user"]["target_score"] = db_user.get("target_score")
+            profile["user"]["grade_mode"] = db_user.get("grade_mode", "middle")
+            profile["user"]["study_goal"] = db_user.get("study_goal", "")
             profile["buddy"]["role_id"] = db_user.get("current_role_id")
             if db_user.get("custom_buddy_name"):
                 profile["buddy"]["name"] = db_user["custom_buddy_name"]
@@ -128,13 +140,12 @@ class BuddyProfile:
         return self.data.get("buddy", {}).copy()
 
     def is_setup_complete(self) -> bool:
-        """检查档案是否设置完整"""
+        """检查档案是否设置完整
+
+        产品已不保留"考试倒计时"概念，因此完整性以"有昵称 + 有学段"为准。
+        """
         user = self.data.get("user", {})
-        return bool(
-            user.get("target_school") and
-            user.get("target_major") and
-            user.get("exam_date")
-        )
+        return bool(user.get("name") and user.get("grade_mode"))
 
     def update_user(self, **kwargs):
         """更新用户信息"""
@@ -142,9 +153,8 @@ class BuddyProfile:
             self.data["user"] = {}
         for key, value in kwargs.items():
             if key in [
-                "name", "target_school", "target_major", "target_score",
-                "exam_date", "study_type", "daily_goal_hours",
-                "weak_subjects", "strong_subjects"
+                "name", "grade_mode", "study_goal", "study_type",
+                "daily_goal_minutes", "weak_subjects", "strong_subjects"
             ]:
                 self.data["user"][key] = value
         self._save()
@@ -175,49 +185,55 @@ class BuddyProfile:
         self._save()
 
     def get_days_remaining(self) -> int:
-        """获取距离考试的天数"""
-        exam_date = self.data.get("user", {}).get("exam_date")
-        if not exam_date:
-            return -1
-        try:
-            exam = datetime.strptime(exam_date, "%Y-%m-%d")
-            today = datetime.now()
-            return max(0, (exam - today).days)
-        except (ValueError, TypeError):
-            return -1
+        """已废弃：产品不再保留"距离考试还有 N 天"概念。
+
+        保留该方法仅为兼容既有调用方（buddy.py 的 get_full_status 等），
+        恒返回 -1，表示"未设置倒计时"。
+        """
+        return -1
 
     def get_current_phase(self) -> str:
-        """获取当前备考阶段"""
-        days = self.get_days_remaining()
-        if days < 0:
-            return "未设置目标"
-        elif days <= 30:
-            return "冲刺阶段"
-        elif days <= 90:
-            return "强化阶段"
+        """获取当前学习阶段
+
+        不再依据考试倒计时推算，改为按累计学习时长粗略分档。
+        """
+        total_minutes = 0
+        try:
+            from src.study.study_tracker import get_study_tracker
+            total_minutes = get_study_tracker().get_stats().get("total_minutes", 0) or 0
+        except Exception:
+            total_minutes = 0
+
+        hours = total_minutes / 60
+        if hours <= 0:
+            return "刚起步"
+        elif hours < 10:
+            return "打基础"
+        elif hours < 50:
+            return "稳步学"
         else:
-            return "基础阶段"
+            return "学得很稳"
 
     def get_study_summary(self) -> str:
-        """获取学习概况摘要（用于AI提示词）"""
+        """获取学习概况摘要（用于 AI 提示词）"""
         user = self.data.get("user", {})
-        days = self.get_days_remaining()
 
         parts = []
-        if user.get("target_school"):
-            parts.append(f"目标：{user['target_school']}")
-        if user.get("target_major"):
-            parts.append(f"{user['target_major']}")
-        if user.get("target_score"):
-            parts.append(f"目标分数：{user['target_score']}分")
-        if days >= 0:
-            parts.append(f"距离考试：{days}天")
+        grade_labels = {"primary": "小学", "middle": "初中"}
+        grade = user.get("grade_mode")
+        if grade in grade_labels:
+            parts.append(f"学段：{grade_labels[grade]}")
+        if user.get("study_goal"):
+            parts.append(f"学习目标：{user['study_goal']}")
+        if user.get("weak_subjects"):
+            parts.append("需要多练的科目：" + "、".join(user["weak_subjects"]))
+        if user.get("strong_subjects"):
+            parts.append("擅长的科目：" + "、".join(user["strong_subjects"]))
 
         phase = self.get_current_phase()
-        if phase != "未设置目标":
-            parts.append(f"当前阶段：{phase}")
+        parts.append(f"当前阶段：{phase}")
 
-        return "，".join(parts) if parts else "尚未设置目标"
+        return "，".join(parts) if parts else "还没有填写学习信息"
 
     def reset(self):
         """重置档案"""

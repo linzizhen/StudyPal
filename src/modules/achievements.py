@@ -232,52 +232,52 @@ ALL_ACHIEVEMENTS = [
     Achievement("efficiency_master", "效率大师", "单日完成5个任务且学习超过2小时",
                 "⚡", "efficiency_day", 1, 80),
 
-    # ========== 考研专属成就 ==========
+    # ========== 成长与习惯成就（小学到初中） ==========
 
-    # 备考开始
-    Achievement("kaoyan_start", "启程", "开始了考研备考之旅",
+    # 启程：第一次使用学习功能
+    Achievement("study_journey_start", "出发啦", "第一次开始学习，迈出第一步",
                 "🚀", "milestone_start", 1, 50),
 
-    # 目标确定
-    Achievement("target_set", "目标明确", "确定了自己的目标院校和专业",
+    # 定下小目标
+    Achievement("target_set", "定个小目标", "为自己定下了这个阶段的小目标",
                 "🎯", "milestone_target", 1, 80),
 
-    # 报名成功
-    Achievement("registration_done", "报名成功", "完成考研正式报名",
-                "📮", "milestone_registration", 1, 100),
+    # 写下心愿/计划
+    Achievement("plan_written", "计划小达人", "写下了一份自己的学习计划",
+                "📮", "milestone_plan", 1, 100),
 
-    # 考研倒计时里程碑
-    Achievement("countdown_100", "倒计时100天", "距离考试还有100天",
-                "📆", "countdown_100", 1, 60),
-    Achievement("countdown_30", "倒计时30天", "距离考试还有30天，冲刺阶段",
-                "⏰", "countdown_30", 1, 100),
-    Achievement("countdown_7", "最后一周", "距离考试只有一周了",
-                "🔥", "countdown_7", 1, 150),
+    # 开学/新学期里程碑
+    Achievement("new_term_100", "新学期启程", "新学期开始了，一起加油",
+                "📆", "new_term", 1, 60),
+    Achievement("mid_term_check", "期中冲一冲", "期中到了，复习得很认真",
+                "⏰", "mid_term", 1, 100),
+    Achievement("final_push", "期末加把劲", "期末到了，坚持复习到最后",
+                "🔥", "final_term", 1, 150),
 
-    # 情绪勇士（连续记录日记）
-    Achievement("emotion_warrior_7", "情绪记录者", "连续记录7天情绪日记",
+    # 情绪记录（保留，与倒计时无关）
+    Achievement("emotion_warrior_7", "心情记录员", "连续记录7天心情日记",
                 "💪", "diary_streak", 7, 40),
-    Achievement("emotion_warrior_30", "情绪勇士", "连续记录30天情绪日记",
+    Achievement("emotion_warrior_30", "心情小达人", "连续记录30天心情日记",
                 "🏅", "diary_streak", 30, 100),
 
-    # 模拟考试
-    Achievement("first_mock", "初试锋芒", "完成第一次模拟考试",
+    # 单元测验 / 小考
+    Achievement("first_quiz", "第一次小测", "完成了第一次单元小测",
                 "📝", "mock_exam", 1, 60),
-    Achievement("five_mocks", "身经百战", "完成5次模拟考试",
+    Achievement("five_quizzes", "越考越稳", "完成了5次单元小测",
                 "📚", "mock_exam", 5, 120),
 
     # 学习阶段里程碑
-    Achievement("phase_basics_done", "基础完成", "完成基础知识一轮复习",
+    Achievement("phase_basics_done", "基础打牢", "完成了一轮基础复习",
                 "🌱", "phase_basics", 1, 80),
-    Achievement("phase_strengthen_done", "强化阶段", "进入强化阶段学习",
+    Achievement("phase_strengthen_done", "越学越深", "进入更深入的练习阶段",
                 "💪", "phase_strengthen", 1, 100),
-    Achievement("phase冲刺_done", "冲刺阶段", "进入最后的冲刺阶段",
+    Achievement("phase冲刺_done", "考前冲刺", "进入最后的复习冲刺",
                 "🚀", "phase冲刺", 1, 120),
 
     # 最终成就
-    Achievement("exam_done", "勇者无惧", "完成研究生考试",
+    Achievement("exam_done", "考试完成", "完成了一次重要考试",
                 "🎓", "milestone_exam", 1, 200),
-    Achievement("shang_an", "上岸啦", "查到成绩，成功上岸！这是属于你的胜利！",
+    Achievement("term_finished", "这学期圆满啦", "顺利走完了一个学期，为你骄傲！",
                 "🏆", "milestone_success", 1, 500),
 ]
 

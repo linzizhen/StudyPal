@@ -1,9 +1,9 @@
 """
-StudyPal 考研历程时间线模块
-记录考研路上的里程碑事件
+StudyPal 成长时间线模块
+记录孩子学习路上的里程碑事件
 
 里程碑类型：
-- start: 开始备考
+- start: 开始学习
 - milestone: 重要节点
 - achievement: 成就解锁
 - struggle: 困难时刻
@@ -82,9 +82,9 @@ class TimelineEvent:
 
 class Timeline:
     """
-    考研历程时间线
+    成长时间线
 
-    记录考研路上的每一个重要时刻
+    记录学习路上的每一个重要时刻
     """
 
     def __init__(self, data_file: str = "data/timeline.json"):
@@ -200,7 +200,7 @@ class Timeline:
     # ========== 自动检测里程碑 ==========
 
     MILESTONE_TYPES = [
-        'study_start',      # 开始备考
+        'study_start',      # 开始学习
         'first_complete',   # 首次完成某事
         'streak_record',    # 连续记录
         'score_break',      # 成绩突破
@@ -224,12 +224,12 @@ class Timeline:
         """
         new_milestones = []
 
-        # 检查开始备考
+        # 检查开始学习
         if self._check_milestone('study_start', user_stats):
             evt = self._add_milestone(
                 event_type='start',
-                title='开始考研备考之旅',
-                description='迈出了考研的第一步',
+                title='开始学习之旅',
+                description='迈出了学习的第一步',
                 emotion='期待',
                 tags=['start', 'milestone']
             )
@@ -259,7 +259,7 @@ class Timeline:
                 evt = self._add_milestone(
                     event_type='milestone',
                     title='写下第一篇日记',
-                    description='开始记录考研生活',
+                    description='开始记录学习生活',
                     emotion='满足',
                     tags=['diary', 'milestone']
                 )
@@ -321,12 +321,12 @@ class Timeline:
 
     # ========== 自动记录 ==========
 
-    def record_study_start(self, subject: str = "开始备考") -> str:
+    def record_study_start(self, subject: str = "开始学习") -> str:
         """记录开始学习"""
         return self.add_event(
             event_type="start",
             title=f"开始了 {subject} 之旅",
-            description="迈出考研的第一步",
+            description="迈出学习的第一步",
             emotion="期待",
             tags=["start", subject]
         )

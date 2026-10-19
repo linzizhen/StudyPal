@@ -1,6 +1,6 @@
 """
 StudyPal 日记路由
-处理考研日记、情绪记录相关 API
+处理日记、心情记录相关 API
 """
 
 from flask import Blueprint, jsonify, request
