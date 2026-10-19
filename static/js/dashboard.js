@@ -1,4 +1,4 @@
-﻿/**
+/**
  * StudyPal - Dashboard JavaScript
  */
 
@@ -429,11 +429,16 @@ function initDiary() {
 // ============================================================
 // 学习搭子
 // ============================================================
+// 角色数据表：必须覆盖后端 BUDDY_ROLES 的全部 6 个角色。
+// xuejie 是后端已兼容的别名（等价 senior），此处保留以兼容既有 HTML。
 const BUDDY_DATA = {
-  xiaodou: { name: "小豆", type: "温柔陪伴型", emoji: "🌸", bg: "#FFD93D", personality: "warm" },
-  aran:    { name: "阿燃", type: "热血激励型", emoji: "🔥", bg: "#FF6B6B", personality: "passionate" },
-  xuejie:  { name: "学姐", type: "学霸导师型", emoji: "📚", bg: "#74C0FC", personality: "rational" },
-  xiaoye:  { name: "小夜", type: "深夜倾听型", emoji: "🌙", bg: "#9775FA", personality: "listener" }
+  xiaodou: { name: "小豆",  type: "温柔陪伴型", emoji: "🌸", bg: "#FFD93D", personality: "warm" },
+  aran:    { name: "阿燃",  type: "热血激励型", emoji: "⚡", bg: "#FF6B6B", personality: "passionate" },
+  xuejie:  { name: "小老师", type: "耐心讲解型", emoji: "📚", bg: "#74C0FC", personality: "rational" },
+  senior:  { name: "小老师", type: "耐心讲解型", emoji: "📚", bg: "#74C0FC", personality: "rational" },
+  xiaoye:  { name: "小夜",  type: "安静倾听型", emoji: "🌙", bg: "#9775FA", personality: "listener" },
+  xj:      { name: "戏精",  type: "幽默搞怪型", emoji: "🎭", bg: "#FFD93D", personality: "playful" },
+  azheng:  { name: "阿正",  type: "理性分析型", emoji: "🤖", bg: "#6C7A89", personality: "logical" }
 };
 
 let currentBuddy = "xiaodou";
@@ -531,12 +536,12 @@ function initChat() {
     const loadingTexts = {
       warm: '小豆正在思考...',
       passionate: '阿燃正在燃烧斗志...',
-      rational: '学姐正在推导中...',
+      rational: '小老师正在一步步推导...',
       listener: '小夜正在静静思考...',
-      xuejie: '学姐正在推导中...',
+      xuejie: '小老师正在一步步推导...',
       xiaodou: '小豆正在思考...',
       aran: '阿燃正在燃烧斗志...',
-      senior: '学姐正在推导中...',
+      senior: '小老师正在一步步推导...',
       xiaoye: '小夜正在静静思考...'
     };
     const text = loadingTexts[currentBuddy] || '搭子正在思考...';
@@ -858,7 +863,7 @@ function saveBuddyFromModal() {
 
   if (!name.trim()) { showToast('请输入搭子名字'); return; }
 
-  var typeNames = { warm: '温暖陪伴型', passionate: '热血激励型', rational: '理性分析型', listener: '深夜倾听型', humor: '幽默风趣型', analyst: '学霸导师型' };
+  var typeNames = { warm: '温暖陪伴型', passionate: '热血激励型', rational: '耐心讲解型', listener: '安静倾听型', humor: '幽默风趣型', analyst: '耐心讲解型' };
   var buddyId = 'custom_' + Date.now();
 
   var list = document.getElementById('buddy-designer-list');
@@ -1070,8 +1075,9 @@ function escapeHtml(str) {
 var EXPLAIN_LOADER_WORDS = {
   xiaodou: ['小豆正在浇灌知识花园...', '花瓣慢慢展开...', '为你种下一颗种子...', '风里飘来花香...'],
   aran:    ['阿燃正在点燃竞技场！', '燃烧吧小宇宙！', '准备战斗！', '能量正在汇聚...'],
-  senior:  ['学姐调整显微镜...', '记录实验数据...', '正在分析实验结果...', '实验报告生成中...'],
-  xiaoye:  ['小夜仰望星空...', '月光慢慢亮起...', '星星正在连线...', '夜风送来灵感...'],
+  senior:  ['小老师摆好了教具...', '正在一步一步拆解...', '举个小例子...', '马上讲明白...'],
+  xuejie:  ['小老师摆好了教具...', '正在一步一步拆解...', '举个小例子...', '马上讲明白...'],
+  xiaoye:  ['小夜望向窗外...', '月光慢慢亮起...', '星星正在连线...', '夜风送来灵感...'],
   xj:      ['戏精正在抖段子...', '笑料加载中...', '麦克风调音完毕...', '快乐即将到达战场...'],
   azheng:  ['阿正启动数据仪表盘...', '采集样本中...', '逻辑链校验中...', '输出结论渲染中...']
 };
@@ -1334,7 +1340,7 @@ var BUDDY_CONVERSATIONS = {
 var BUDDY_THINKING = {
   xiaodou: '小豆正在思考...',
   aran:    '阿燃正在燃烧斗志...',
-  xuejie:  '学姐正在推导中...',
+  xuejie:  '小老师正在一步步推导...',
   xiaoye:  '小夜正在静静思考...'
 };
 
@@ -1408,7 +1414,7 @@ function renderWelcomeToChat(buddyId) {
   var welcomes = {
     xiaodou: '嗨！我是小豆，你的学习搭子~ 🌟 有什么想聊的吗？',
     aran:    '哟！我是阿燃！🔥 准备燃烧你的学习热情了吗！',
-    xuejie:  '你好，我是学姐 📚 有什么学习上的问题尽管问。',
+    xuejie:  '你好，我是小老师 📚 哪里没听懂尽管问我。',
     xiaoye:  '晚上好...我是小夜 🌙 慢慢说，我听着呢。'
   };
   addChatMessage('buddy', welcomes[buddyId] || '你好！');

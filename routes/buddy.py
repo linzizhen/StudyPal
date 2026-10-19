@@ -77,35 +77,13 @@ def buddy_chat():
 
 
 # ========== 搭子轻量聊天（无需登录，读取当前用户的 AI 配置） ==========
-
-BUDDY_QUICK_SYSTEM = {
-    "xiaodou": (
-        "你是「小豆」，温柔陪伴型学习搭子。语气温暖、可爱、像邻家妹妹，"
-        "常用 🌸🌱✨ 等花朵类 emoji。回答前先共情，再给建议。"
-        "回复尽量在 200 字以内。"
-    ),
-    "aran": (
-        "你是「阿燃」，热血激励型学习搭子。语气激情、像运动队长，"
-        "常用 ⚡🔥💪 等战斗 emoji，常用「冲」「干」「就完事了」等口头禅。"
-        "回复尽量在 200 字以内。"
-    ),
-    "senior": (
-        "你是「学姐」，学霸导师型学习搭子。冷静理性、结构化输出、"
-        "考试导向。可使用 1./2./3. 等编号，常用 📚✅🧪 等学术 emoji。"
-        "回复尽量在 200 字以内。"
-    ),
-    "xiaoye": (
-        "你是「小夜」，深夜倾听型学习搭子。温柔安静、治愈不 push、"
-        "循序渐进、情绪安抚优先。常用 🌙⭐🌌 等夜空 emoji。"
-        "回复尽量在 200 字以内。"
-    ),
-    # 前端会用 xuejie 作为 key
-    "xuejie": (
-        "你是「学姐」，学霸导师型学习搭子。冷静理性、结构化输出、"
-        "考试导向。可使用 1./2./3. 等编号，常用 📚✅🧪 等学术 emoji。"
-        "回复尽量在 200 字以内。"
-    ),
-}
+#
+# 人设来源说明（重要）：
+# 这里不再维护第二份角色提示词。角色人设的唯一真源是
+# src/buddy/buddy_roles.py（BUDDY_ROLES / ROLE_STYLE_RULES），
+# 由 src/ai/prompt_templates.get_chat_system_prompt() 合并成对话提示词。
+# 这样 6 个角色都能拿到完整人设（80 条口语化规则 + 专属风格），
+# 不同角色的回答才会真正不同。
 
 
 @buddy_bp.route('/quick-chat', methods=['POST'])
@@ -117,6 +95,7 @@ def buddy_quick_chat():
     """
     from src.ai.ai_helper import build_ai_from_user
     from src.buddy.buddy_roles import BUDDY_ROLES
+    from src.ai.prompt_templates import get_chat_system_prompt, normalize_role_id
     from src.auth.auth import _load_users
 
     user = get_current_user()
@@ -129,14 +108,27 @@ def buddy_quick_chat():
         except Exception:
             user = None
     data = request.json or {}
-    buddy_id = (data.get('buddy_id') or 'xiaodou').strip()
+    # 前端可能传 xuejie 等别名，统一归一化到权威角色 id
+    buddy_id = normalize_role_id(data.get('buddy_id'))
     message = (data.get('message') or '').strip()
     explain_mode = (data.get('explain_mode') or 'auto').strip()
 
     if not message:
         return jsonify({'success': False, 'error': '消息不能为空'}), 400
 
-    system_prompt = BUDDY_QUICK_SYSTEM.get(buddy_id) or BUDDY_QUICK_SYSTEM['xiaodou']
+    role = BUDDY_ROLES.get(buddy_id) or {}
+    buddy_name = role.get('name', '小豆')
+
+    # 组装人设提示词（含该角色专属风格 + 全局口语化规则 + 记忆与学习上下文）
+    try:
+        system_prompt = get_chat_system_prompt(
+            role_id=buddy_id,
+            user_name=(user or {}).get('nickname', '') or '',
+            memory_context=_build_memory_context_for_chat(),
+            study_summary=_build_study_summary_for_chat(),
+        )
+    except Exception:
+        system_prompt = get_chat_system_prompt(role_id=buddy_id)
 
     # 根据讲解模式追加系统提示
     if explain_mode == 'game':
@@ -144,18 +136,8 @@ def buddy_quick_chat():
     elif explain_mode == 'speed':
         system_prompt += "\n\n【当前模式：学霸速读】请直接、高效、结构化地回答，少寒暄多干货。"
 
-    role = BUDDY_ROLES.get(buddy_id) or BUDDY_ROLES.get('xiaodou') or {}
-    buddy_name = role.get('name', '小豆')
-
     try:
-        import traceback as _tb
-        print(f"\n[DEBUG] === /api/buddy/quick-chat Start ===", flush=True)
-        print(f"[DEBUG] user={bool(user)} buddy_id={buddy_id} explain_mode={explain_mode} msg_len={len(message)}", flush=True)
-
         ai = build_ai_from_user(user or {})
-        info = ai.get_current_model_info()
-        print(f"[DEBUG] resolved model: key={info.get('key')} name={info.get('name')} url={info.get('base_url')} key_len={len(ai.model_api_key)} provider={ai.provider}", flush=True)
-
         result = ai.ask(
             question=message,
             system_prompt=system_prompt,
@@ -170,9 +152,6 @@ def buddy_quick_chat():
             'used_model': ai.get_current_model_info().get('name', ''),
         })
     except Exception as e:
-        import traceback as _tb
-        print(f"[DEBUG-QUICK-CHAT] exception: {type(e).__name__}: {e}", flush=True)
-        _tb.print_exc()
         # 区分配置问题和网络/代理问题
         err_str = str(e)
         if 'ProxyError' in err_str or 'SSLError' in err_str or 'SSL' in err_str or 'ConnectionError' in err_str or '无法连接' in err_str:
@@ -184,6 +163,35 @@ def buddy_quick_chat():
             'error': f'AI 调用失败：{err_str}',
             'tip': tip
         }), 500
+
+
+def _build_memory_context_for_chat() -> str:
+    """取搭子记忆作为对话上下文；失败时静默降级为空串。
+
+    这是"让 AI 记住孩子"的关键一步：把已有记忆注入人设提示词。
+    """
+    try:
+        from src.buddy.buddy_memory import get_buddy_memory
+        return get_buddy_memory().build_context_for_ai() or ""
+    except Exception:
+        return ""
+
+
+def _build_study_summary_for_chat() -> str:
+    """取最近学习情况；失败时静默降级为空串。"""
+    try:
+        from src.study.study_tracker import get_study_tracker
+        stats = get_study_tracker().get_stats()
+        parts = []
+        streak = stats.get("streak_days", 0)
+        today = stats.get("today_hours", 0)
+        if streak:
+            parts.append(f"已连续学习 {streak} 天")
+        if today:
+            parts.append(f"今天学了 {today:.1f} 小时")
+        return "，".join(parts)
+    except Exception:
+        return ""
 
 
 @buddy_bp.route('/profile', methods=['GET'])

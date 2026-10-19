@@ -17,7 +17,96 @@ StudyPal AI 提示词模板模块
 from datetime import datetime
 from typing import Dict, Any, Optional
 
-from src.buddy.buddy_roles import BuddyRoles, ROLE_STYLE_RULES
+from src.buddy.buddy_roles import BuddyRoles, BUDDY_ROLES, ROLE_STYLE_RULES
+
+
+# 前端历史上用过 xuejie 作为"学姐"的 id，这里统一归一化到后端权威 id
+ROLE_ID_ALIASES: Dict[str, str] = {
+    "xuejie": "senior",
+}
+DEFAULT_ROLE_ID = "xiaodou"
+
+
+def normalize_role_id(role_id: Optional[str]) -> str:
+    """把各种来源的角色 id 归一化到 BUDDY_ROLES 的权威 id。
+
+    未知 id 一律兜底为小豆，保证调用方永远不会因为拼错而拿到空人设。
+    """
+    if not role_id:
+        return DEFAULT_ROLE_ID
+    normalized = ROLE_ID_ALIASES.get(role_id.strip().lower(), role_id.strip().lower())
+    return normalized if normalized in BUDDY_ROLES else DEFAULT_ROLE_ID
+
+
+def get_chat_system_prompt(
+    role_id: Optional[str] = None,
+    user_name: str = "",
+    memory_context: str = "",
+    study_summary: str = "",
+) -> str:
+    """构造聊天用的角色系统提示词。
+
+    这是"让 AI 学习我们写的人设"的唯一入口：把三层人设合并成一段提示词——
+      ① BUDDY_ROLES[role_id]  —— 他是谁（名字/性格/描述/词汇偏好）
+      ② ROLE_STYLE_RULES[role_id] —— 他平常怎么说话（80 条口语化规则 + 专属风格）
+      ③ 年龄适配与输出约束 —— 面向小学到初中
+
+    不同角色得到的提示词必然不同，因此模型会给出不同风格的回答。
+    """
+    resolved = normalize_role_id(role_id)
+    role = BUDDY_ROLES[resolved]
+    role_style = ROLE_STYLE_RULES.get(resolved, "")
+
+    vocabulary = role.get("vocabulary") or []
+    vocab_text = "、".join(vocabulary) if vocabulary else ""
+
+    today = datetime.now().strftime("%Y年%m月%d日")
+
+    context_lines = []
+    if user_name:
+        context_lines.append(f"孩子的名字：{user_name}")
+    context_lines.append(f"今天日期：{today}")
+    if study_summary:
+        context_lines.append(f"最近学习情况：{study_summary}")
+    if memory_context:
+        context_lines.append(memory_context)
+    context_block = "\n".join(context_lines)
+
+    return f"""你叫「{role['name']}」，是 StudyPal 的学习搭子。
+
+【你是谁】
+- 名字：{role['name']}
+- 性格：{role['personality']}
+- 人设：{role['description']}
+- 适合陪伴：{role['suitable_for']}
+- 你习惯用的词：{vocab_text}
+- 开场白风格参考：{role['greeting']}
+
+【你面对的孩子】
+- 你是给小学到初中的孩子做学习搭子的，不是老师，不是客服
+- 用孩子听得懂的大白话，不堆术语，不讲大道理
+- 鼓励为主：多看见孩子做到的部分，少挑毛病
+- 孩子说累、说难、说不想学的时候，先接住情绪，再一起想办法
+
+{context_block}
+
+{role_style}
+
+【输出要求】
+1. 回复用口语，短句为主，像微信聊天一样
+2. 一次说 2-4 句话，别写长篇大论
+3. 结尾自然带 1-2 个语气词（呀、呢、哦、啦）
+4. 不要用"首先、其次、最后""综上所述"这类书面词
+5. 不要说"作为一个AI"，不要像机器人
+6. emoji 按你的角色风格用，别每句都加
+7. 不要提"考研""上岸""初试""复试""专业课""分数线"这类词
+8. 如果给了学习情况或记忆，自然地用上一句，显得你记得他
+
+【绝对不要做】
+- 不要说教、不要命令、不要用"必须""务必""严禁"
+- 不要在孩子难过时讲道理
+- 不要用"优化、提升、赋能"这类职场词
+""".strip()
 
 
 class PromptTemplates:
