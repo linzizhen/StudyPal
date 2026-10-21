@@ -512,7 +512,7 @@ function initPomodoro() {
     if (!running) {
       if (remaining <= 0) remaining = totalSeconds;
       running = true;
-      if (statusEl) statusEl.textContent = '专注中...';
+      if (statusEl) statusEl.textContent = '专注中…';
       if (toggleBtn) toggleBtn.textContent = '暂停';
       timer = setInterval(tick, 1000);
     } else {
@@ -844,8 +844,10 @@ function initDiary() {
     var chip = document.createElement('span');
     chip.className = 'tag-chip';
     chip.innerHTML = escapeHtml(text) +
-      ' <span class="tag-remove" onclick="this.parentElement.remove()">&times;</span>';
+      ' <button type="button" class="tag-remove" aria-label="删除标签 ' + escapeHtml(text) + '">&times;</button>';
     tagList.appendChild(chip);
+    var rm = chip.querySelector('.tag-remove');
+    if (rm) rm.addEventListener('click', function() { chip.remove(); });
   }
 
   // 情绪按钮：读 data-level 并记为待提交的情绪档位
@@ -924,7 +926,9 @@ function initChat() {
     const hStatus = document.getElementById('chat-buddy-status');
     if (hAvatar) { hAvatar.textContent = buddy.emoji; hAvatar.style.background = buddy.bg; }
     if (hName) hName.textContent = buddy.name;
-    if (hStatus) hStatus.textContent = '在线 · ' + buddy.type;
+    if (hStatus) hStatus.textContent = '在线';
+  var hType = document.getElementById('chat-buddy-type');
+  if (hType) hType.textContent = buddy.type;
 
     // 右侧搭子档案
     const pAvatar = document.getElementById('profile-avatar');
@@ -980,17 +984,17 @@ function initChat() {
   function addLoadingBubble() {
     const buddy = BUDDY_DATA[currentBuddy];
     const loadingTexts = {
-      warm: '小豆正在思考...',
-      passionate: '阿燃正在燃烧斗志...',
-      rational: '小老师正在一步步推导...',
-      listener: '小夜正在静静思考...',
-      xuejie: '小老师正在一步步推导...',
-      xiaodou: '小豆正在思考...',
-      aran: '阿燃正在燃烧斗志...',
-      senior: '小老师正在一步步推导...',
-      xiaoye: '小夜正在静静思考...'
+      warm: '小豆正在思考…',
+      passionate: '阿燃正在燃烧斗志…',
+      rational: '小老师正在一步步推导…',
+      listener: '小夜正在静静思考…',
+      xuejie: '小老师正在一步步推导…',
+      xiaodou: '小豆正在思考…',
+      aran: '阿燃正在燃烧斗志…',
+      senior: '小老师正在一步步推导…',
+      xiaoye: '小夜正在静静思考…'
     };
-    const text = loadingTexts[currentBuddy] || '搭子正在思考...';
+    const text = loadingTexts[currentBuddy] || '搭子正在思考…';
     const id = 'loading-' + Date.now();
     const div = document.createElement('div');
     div.id = id;
@@ -1001,9 +1005,9 @@ function initChat() {
         '<div class="message-author">' + buddy.name + '</div>' +
         '<div class="message-bubble" style="display:flex;align-items:center;gap:8px;">' +
           '<span class="loading-dots" style="display:inline-flex;gap:4px;">' +
-            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;animation-delay:-0.32s;"></span>' +
-            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;animation-delay:-0.16s;"></span>' +
-            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;"></span>' +
+            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
+            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
+            '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
           '</span>' +
           '<span style="font-size:13px;color:#8C8C8C;">' + text + '</span>' +
         '</div>' +
@@ -1060,7 +1064,7 @@ function initChat() {
     .then(function(data) {
       removeLoadingBubble(loadingId);
       if (data && data.success) {
-        addMessage(data.reply || '...', 'buddy');
+        addMessage(data.reply || '…', 'buddy');
         bumpChatStat();
       } else {
         var err = (data && data.error) || 'AI 回复失败';
@@ -1172,7 +1176,7 @@ function initChat() {
   // 历史记录按钮
   var historyBtn = document.getElementById("btn-chat-history");
   if (historyBtn) {
-    historyBtn.addEventListener("click", () => showToast("历史记录功能开发中..."));
+    historyBtn.addEventListener("click", () => showToast("历史记录功能开发中…"));
   }
 
   // 设置页创建搭子按钮 → 打开弹窗
@@ -1192,7 +1196,7 @@ function initChat() {
     tab.addEventListener("click", () => {
       document.querySelectorAll(".chat-tab").forEach(t => t.classList.remove("active"));
       tab.classList.add("active");
-      showToast(tab.dataset.tab === "history" ? "历史对话加载中..." : "当前对话");
+      showToast(tab.dataset.tab === "history" ? "历史对话加载中…" : "当前对话");
     });
   });
 
@@ -1432,7 +1436,7 @@ async function testAiConnection() {
   var headers = { 'Content-Type': 'application/json' };
   var tk = getToken();
   if (tk) headers['Authorization'] = 'Bearer ' + tk;
-  showToast('正在测试连接...');
+  showToast('正在测试连接…');
   try {
     var res = await rawFetch('/api/ai-model/test', {
       method: 'POST',
@@ -1465,7 +1469,7 @@ async function saveAiConfig() {
   var authHeaders = { 'Content-Type': 'application/json' };
   var tk = getToken();
   if (tk) authHeaders['Authorization'] = 'Bearer ' + tk;
-  showToast('正在保存...');
+  showToast('正在保存…');
   try {
     if (preset) {
       var res = await rawFetch('/api/ai-model/preset', {
@@ -1502,7 +1506,7 @@ function showToast(message) {
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'study-pal-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;opacity:1;transition:opacity 0.3s;pointer-events:none;';
+    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;opacity:1;transition:opacity ' + (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? '0.01s' : '0.3s') + ';pointer-events:none;';
     document.body.appendChild(toast);
   }
   toast.textContent = message;
@@ -1522,13 +1526,13 @@ function escapeHtml(str) {
 // ============================================================
 
 var EXPLAIN_LOADER_WORDS = {
-  xiaodou: ['小豆正在浇灌知识花园...', '花瓣慢慢展开...', '为你种下一颗种子...', '风里飘来花香...'],
-  aran:    ['阿燃正在点燃竞技场！', '燃烧吧小宇宙！', '准备战斗！', '能量正在汇聚...'],
-  senior:  ['小老师摆好了教具...', '正在一步一步拆解...', '举个小例子...', '马上讲明白...'],
-  xuejie:  ['小老师摆好了教具...', '正在一步一步拆解...', '举个小例子...', '马上讲明白...'],
-  xiaoye:  ['小夜望向窗外...', '月光慢慢亮起...', '星星正在连线...', '夜风送来灵感...'],
-  xj:      ['戏精正在抖段子...', '笑料加载中...', '麦克风调音完毕...', '快乐即将到达战场...'],
-  azheng:  ['阿正启动数据仪表盘...', '采集样本中...', '逻辑链校验中...', '输出结论渲染中...']
+  xiaodou: ['小豆正在浇灌知识花园…', '花瓣慢慢展开…', '为你种下一颗种子…', '风里飘来花香…'],
+  aran:    ['阿燃正在点燃竞技场！', '燃烧吧小宇宙！', '准备战斗！', '能量正在汇聚…'],
+  senior:  ['小老师摆好了教具…', '正在一步一步拆解…', '举个小例子…', '马上讲明白…'],
+  xuejie:  ['小老师摆好了教具…', '正在一步一步拆解…', '举个小例子…', '马上讲明白…'],
+  xiaoye:  ['小夜望向窗外…', '月光慢慢亮起…', '星星正在连线…', '夜风送来灵感…'],
+  xj:      ['戏精正在抖段子…', '笑料加载中…', '麦克风调音完毕…', '快乐即将到达战场…'],
+  azheng:  ['阿正启动数据仪表盘…', '采集样本中…', '逻辑链校验中…', '输出结论渲染中…']
 };
 
 var EXPLAIN_ROLE_THEME = {
@@ -1855,13 +1859,13 @@ var BUDDY_CONVERSATIONS = {
 // 搭子专属错误提示 / 思考语
 // xuejie 是 senior 的前端别名，两个键都保留以避免任一侧取不到数据
 var BUDDY_THINKING = {
-  xiaodou: '小豆正在思考...',
-  aran:    '阿燃正在燃烧斗志...',
-  xuejie:  '小老师正在一步步推导...',
-  senior:  '小老师正在一步步推导...',
-  xiaoye:  '小夜正在静静思考...',
-  xj:      '戏精正在编段子...',
-  azheng:  '阿正正在理清逻辑...'
+  xiaodou: '小豆正在思考…',
+  aran:    '阿燃正在燃烧斗志…',
+  xuejie:  '小老师正在一步步推导…',
+  senior:  '小老师正在一步步推导…',
+  xiaoye:  '小夜正在静静思考…',
+  xj:      '戏精正在编段子…',
+  azheng:  '阿正正在理清逻辑…'
 };
 
 function _nowTimeStr() {
@@ -1935,7 +1939,7 @@ function renderWelcomeToChat(buddyId) {
     xiaodou: '嗨！我是小豆，你的学习搭子~ 🌟 有什么想聊的吗？',
     aran:    '哟！我是阿燃！🔥 准备燃烧你的学习热情了吗！',
     xuejie:  '你好，我是小老师 📚 哪里没听懂尽管问我。',
-    xiaoye:  '晚上好...我是小夜 🌙 慢慢说，我听着呢。'
+    xiaoye:  '晚上好…我是小夜 🌙 慢慢说，我听着呢。'
   };
   addChatMessage('buddy', welcomes[buddyId] || '你好！');
 }
@@ -1944,7 +1948,7 @@ function addLoadingBubbleToChat() {
   var container = chatContainer();
   if (!container) return null;
   var meta = (typeof BUDDY_DATA !== 'undefined' && BUDDY_DATA[currentBuddy]) || {};
-  var text = BUDDY_THINKING[currentBuddy] || '搭子正在思考...';
+  var text = BUDDY_THINKING[currentBuddy] || '搭子正在思考…';
   var id = 'loading-' + Date.now();
   var div = document.createElement('div');
   div.id = id;
@@ -1953,10 +1957,10 @@ function addLoadingBubbleToChat() {
     '<div class="message-avatar">' + (meta.avatar || '🌸') + '</div>' +
     '<div>' +
       '<div class="message-bubble" style="display:flex;align-items:center;gap:8px;">' +
-        '<span style="display:inline-flex;gap:4px;">' +
-          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;animation-delay:-0.32s;"></span>' +
-          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;animation-delay:-0.16s;"></span>' +
-          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;animation:loadingDot 1.4s infinite ease-in-out both;"></span>' +
+        '<span class="loading-dots" style="display:inline-flex;gap:4px;">' +
+          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
+          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
+          '<span style="width:8px;height:8px;background:#ddd;border-radius:50%;"></span>' +
         '</span>' +
         '<span style="font-size:13px;color:#8C8C8C;">' + text + '</span>' +
       '</div>' +
@@ -2002,14 +2006,14 @@ async function sendChatMessage() {
     var data = await res.json();
     removeLoadingBubbleFromChat(loadingId);
     if (data && data.success) {
-      addChatMessage('buddy', data.reply || '...');
+      addChatMessage('buddy', data.reply || '…');
       bumpChatStat();
     } else {
       var err = (data && data.error) || 'AI 回复失败';
       var showCfg = /AI_AUTH|API_KEY|未配置|权限|密钥/.test(err);
       var html = escapeHtml(err);
       if (showCfg) {
-        html += '<br><br><button class="chat-config-btn" onclick="goToSettings()">⚙️ 前往设置配置 AI</button>';
+        html += '<div class="chat-config-wrap"><button class="chat-config-btn" onclick="goToSettings()">⚙️ 前往设置配置 AI</button></div>';
       }
       addChatMessageHtml('buddy', html);
       showToast(err);
@@ -2043,7 +2047,7 @@ async function sendChatMessage() {
     // 构建错误消息 HTML（带前往设置按钮）
     var html = escapeHtml(msg).replace(/\n/g, '<br>');
     if (showConfigBtn) {
-      html += '<br><br><button class="chat-config-btn" onclick="goToSettings()">⚙️ 前往设置配置 AI</button>';
+      html += '<div class="chat-config-wrap"><button class="chat-config-btn" onclick="goToSettings()">⚙️ 前往设置配置 AI</button></div>';
     }
     addChatMessageHtml('buddy', html);
     showToast('发送失败：' + msg.split('\n')[0]);

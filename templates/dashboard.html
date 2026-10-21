@@ -163,7 +163,7 @@
 
             <div class="search-box">
                 <span class="search-icon">🔍</span>
-                <input type="text" placeholder="今天想学点什么？" id="search-input">
+                <input type="text" aria-label="搜索想学的内容" placeholder="今天想学点什么？" id="search-input">
             </div>
 
             <!-- 搭子的主动关心：由 /api/buddy/caring 填充，无内容时自动隐藏 -->
@@ -229,19 +229,19 @@
                     <div class="quick-icon">💬</div>
                     <div class="quick-title">和搭子聊聊</div>
                     <div class="quick-desc">AI智能陪伴</div>
-                    <span class="quick-arrow">→</span>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
                 </div>
                 <div class="quick-card" data-section="diary">
                     <div class="quick-icon">📝</div>
                     <div class="quick-title">写日记</div>
                     <div class="quick-desc">记录今日心情</div>
-                    <span class="quick-arrow">→</span>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
                 </div>
                 <div class="quick-card" data-section="tasks">
                     <div class="quick-icon">✅</div>
                     <div class="quick-title">待办事项</div>
                     <div class="quick-desc">今日任务清单</div>
-                    <span class="quick-arrow">→</span>
+                    <span class="quick-arrow" aria-hidden="true">→</span>
                 </div>
             </div>
 
@@ -351,7 +351,7 @@
                 </div>
                 <div class="pomo-config">
                     <label>专注时长(分钟): <span id="pomo-duration-text">25</span></label>
-                    <input type="range" min="5" max="60" step="5" value="25" id="pomo-duration-input">
+                    <input type="range" min="5" max="60" step="5" value="25" id="pomo-duration-input" aria-label="专注时长（分钟）">
                 </div>
             </div>
             <div class="card">
@@ -373,7 +373,7 @@
                 </div>
             </div>
             <div class="add-task-bar card">
-                <input type="text" id="new-task-input" placeholder="添加新任务..." class="task-input">
+                <input type="text" id="new-task-input" aria-label="新任务内容" placeholder="添加新任务…" class="task-input">
                 <button class="btn-primary" id="btn-add-task">添加</button>
             </div>
             <div class="task-filter-tabs" id="task-filter-tabs">
@@ -399,8 +399,8 @@
                 </div>
             </div>
             <div class="diary-editor card">
-                <input type="text" class="diary-title-input" id="diary-title" placeholder="给今天的日记起个标题..." maxlength="100">
-                <div class="diary-content" id="diary-content" contenteditable="true" placeholder="今天发生了什么？记录下你的学习收获..."></div>
+                <input type="text" class="diary-title-input" id="diary-title" aria-label="日记标题" placeholder="给今天的日记起个标题…" maxlength="100">
+                <div class="diary-content" id="diary-content" contenteditable="true" aria-label="日记正文" role="textbox" tabindex="0" placeholder="今天发生了什么？写下你的收获…"></div>
                 <div class="field-row">
                     <div class="field-col">
                         <label class="input-label" for="diary-biggest-event">今天最难忘的事</label>
@@ -429,7 +429,7 @@
                 </div>
             </div>
             <div class="diary-tags-bar">
-                <input type="text" class="tag-input" id="tag-input" placeholder="添加标签，回车确认..." maxlength="12">
+                <input type="text" class="tag-input" id="tag-input" aria-label="添加标签" placeholder="添加标签，回车确认…" maxlength="12">
                 <div class="tag-list" id="tag-list"></div>
             </div>
 
@@ -448,7 +448,7 @@
                 <aside class="buddy-left-sidebar">
                     <button class="btn-new-conversation" id="btn-new-conversation"><span>+</span> 新对话</button>
                     <div class="conversation-list" id="buddy-history-list">
-                        <div class="history-empty">加载中...</div>
+                        <div class="history-empty">加载中…</div>
                     </div>
                 </aside>
 
@@ -465,7 +465,7 @@
                                 </div>
                                 <div class="buddy-header-status">
                                     <span class="status-dot online"></span>
-                                    <span id="chat-buddy-status">在线 · 温柔陪伴型</span>
+                                    <span id="chat-buddy-status">在线</span><span id="chat-buddy-type">温柔陪伴型</span>
                                 </div>
                             </div>
                         </div>
@@ -509,7 +509,7 @@
                             <button class="input-tool" title="图片">🖼️</button>
                         </div>
                         <div class="input-row">
-                            <textarea placeholder="和搭子聊聊，或输入知识点让搭子讲解..." id="buddy-input" rows="1"></textarea>
+                            <textarea placeholder="和搭子聊聊，或输入知识点让搭子讲解…" id="buddy-input" aria-label="给搭子的消息" rows="1"></textarea>
                             <button class="btn-send" id="btn-send-message">
                                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
                             </button>
@@ -524,7 +524,7 @@
                             <button class="header-btn" id="btn-close-explain" title="关闭">✕</button>
                         </div>
                         <div class="explain-input-row">
-                            <input type="text" id="explain-topic-input" placeholder="输入知识点，例如：一元二次方程求根公式" maxlength="200">
+                            <input type="text" id="explain-topic-input" aria-label="要讲解的知识点" placeholder="输入知识点，例如：一元二次方程求根公式" maxlength="200">
                             <button class="btn-primary" id="btn-start-explain">开始讲解</button>
                         </div>
 
@@ -533,7 +533,7 @@
                             <div class="buddy-loader" id="buddy-loader-icon">
                                 <span class="buddy-loader-emoji" id="buddy-loader-emoji">🌸</span>
                             </div>
-                            <div class="buddy-loader-text" id="buddy-loader-text">小豆正在浇灌知识花园...</div>
+                            <div class="buddy-loader-text" id="buddy-loader-text">小豆正在浇灌知识花园…</div>
                         </div>
 
                         <!-- 结果区 -->
@@ -767,7 +767,7 @@
                 <div class="card-header-title">🔍 翻一翻记忆</div>
                 <div class="add-task-bar">
                     <input type="text" id="memory-search" class="task-input"
-                           placeholder="搜一个关键词，比如「数学」「考试」...">
+                           aria-label="搜索记忆关键词" placeholder="搜一个关键词，比如「数学」「考试」…">
                     <button class="btn-primary" id="btn-memory-search">搜索</button>
                     <button class="btn-ghost" id="btn-memory-clear">看全部</button>
                 </div>
@@ -802,15 +802,15 @@
                 <div class="settings-list">
                     <div class="setting-item">
                         <span>每日学习目标（小时）</span>
-                        <input type="number" id="settings-hours-target" value="2" min="0.5" max="12" step="0.5">
+                        <input type="number" id="settings-hours-target" aria-label="每日学习时长目标（小时）" value="2" min="0.5" max="12" step="0.5">
                     </div>
                     <div class="setting-item">
                         <span>每日番茄目标（个）</span>
-                        <input type="number" id="settings-pomo-target" value="6" min="1" max="20">
+                        <input type="number" id="settings-pomo-target" aria-label="每日番茄钟目标（个）" value="6" min="1" max="20">
                     </div>
                     <div class="setting-item">
                         <span>番茄专注时长（分钟）</span>
-                        <select id="settings-pomo-duration">
+                        <select id="settings-pomo-duration" aria-label="番茄钟时长">
                             <option value="25">25 分钟</option>
                             <option value="30">30 分钟</option>
                             <option value="45">45 分钟</option>
@@ -883,21 +883,21 @@
             <div class="card">
                 <div class="card-header-title">🤖 AI配置</div>
                 <div class="ai-config-form">
-                    <select id="ai-preset-select" style="display:none;" aria-hidden="true">
-                        <option value="">加载中...</option>
+                    <select id="ai-preset-select" style="display:none;" aria-hidden="true" aria-label="AI 预设（隐藏）" tabindex="-1">
+                        <option value="">加载中…</option>
                     </select>
                     <div class="ai-config-hint">手动填入智谱开放平台的 API 信息即可使用。</div>
                     <div class="setting-item">
                         <span>API 地址</span>
-                        <input type="text" id="ai-base-url" placeholder="如 https://open.bigmodel.cn/api/paas/v4/" value="https://open.bigmodel.cn/api/paas/v4">
+                        <input type="text" id="ai-base-url" aria-label="API 地址" placeholder="如 https://open.bigmodel.cn/api/paas/v4/" value="https://open.bigmodel.cn/api/paas/v4">
                     </div>
                     <div class="setting-item">
                         <span>API 密钥</span>
-                        <input type="password" id="ai-api-key" placeholder="格式：sk-xxxxxxxxxxxxxxxx">
+                        <input type="password" id="ai-api-key" aria-label="API 密钥" placeholder="格式：sk-xxxxxxxxxxxxxxxx">
                     </div>
                     <div class="setting-item">
                         <span>模型名称</span>
-                        <input type="text" id="ai-model-name" placeholder="如 glm-4-flash / gpt-4o-mini" value="glm-4-flash">
+                        <input type="text" id="ai-model-name" aria-label="模型名称" placeholder="如 glm-4-flash / gpt-4o-mini" value="glm-4-flash">
                     </div>
                     <div class="ai-config-actions">
                         <button class="btn-secondary" id="btn-test-ai">测试连接</button>
@@ -957,7 +957,7 @@
         <div class="modal hidden" id="buddy-designer-modal">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h3 id="modal-title">创建新搭子</h3>
+                    <h2 id="modal-title">创建新搭子</h2>
                     <button class="btn-close" id="btn-close-modal">&times;</button>
                 </div>
                 <div class="modal-body">
@@ -975,12 +975,12 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>名字</label>
-                        <input type="text" id="bd-name" placeholder="给搭子起个名字" maxlength="10">
+                        <label for="bd-name">名字</label>
+                        <input type="text" id="bd-name" aria-label="搭子名字" placeholder="给搭子起个名字" maxlength="10">
                     </div>
                     <div class="form-group">
-                        <label>性格类型</label>
-                        <select id="bd-personality">
+                        <label for="bd-personality">性格类型</label>
+                        <select id="bd-personality" aria-label="搭子性格">
                             <option value="warm">温暖陪伴型</option>
                             <option value="passionate">热血激励型</option>
                             <option value="rational">理性分析型</option>
@@ -990,12 +990,12 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label>说话风格描述</label>
-                        <textarea id="bd-desc" placeholder="描述这个搭子的说话风格，比如：温柔、鼓励、像大姐姐一样..." rows="2"></textarea>
+                        <label for="bd-desc">说话风格描述</label>
+                        <textarea id="bd-desc" placeholder="描述这个搭子的说话风格，比如：温柔、鼓励、像大姐姐一样…" rows="2"></textarea>
                     </div>
                     <div class="form-group">
-                        <label>专属开场白</label>
-                        <input type="text" id="bd-greeting" placeholder="嗨！我是你的学习搭子...">
+                        <label for="bd-greeting">专属开场白</label>
+                        <input type="text" id="bd-greeting" aria-label="专属开场白示例" placeholder="嗨！我是你的学习搭子…">
                     </div>
                 </div>
                 <div class="modal-footer">
