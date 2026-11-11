@@ -1,6 +1,6 @@
 /* ============================================================
  * StudyPal "我的挑战" 模块样式
- * 严格遵循项目极简米色设计系统
+ * 薄荷绿设计系统（与 dashboard 统一），强调色见文末主题层
  * 所有类名以 .challenge- 为前缀，隔离样式作用域
  * ============================================================ */
 
@@ -53,12 +53,12 @@
     border-radius: 8px;
     font-size: 14px;
     background: #FFFFFF;
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 .challenge-select:focus {
     outline: none;
-    border-color: #1A1A1A;
+    border-color: #4AA894;
 }
 
 .challenge-grade-tag {
@@ -94,12 +94,12 @@
 .challenge-card-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 /* ===== 按钮 ===== */
 .challenge-btn-primary {
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     color: #FFFFFF;
     border: none;
     border-radius: 20px;
@@ -116,7 +116,7 @@
 
 .challenge-btn-ghost {
     background: transparent;
-    color: #1A1A1A;
+    color: #1E2A33;
     border: 1px solid #E8E6E1;
     border-radius: 20px;
     padding: 6px 16px;
@@ -159,7 +159,7 @@
 .challenge-overview-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     margin-bottom: 12px;
 }
 
@@ -194,7 +194,7 @@
 
 .challenge-term-progress-fill {
     height: 100%;
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     border-radius: 3px;
 }
 
@@ -229,7 +229,7 @@
 .challenge-subject-name {
     font-size: 16px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -255,7 +255,7 @@
 .challenge-subject-percent {
     font-size: 13px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     min-width: 36px;
     text-align: right;
 }
@@ -263,7 +263,7 @@
 .challenge-subject-stars,
 .challenge-subject-score {
     font-size: 14px;
-    color: #1A1A1A;
+    color: #1E2A33;
     margin-left: auto;
 }
 
@@ -299,7 +299,7 @@
 
 .challenge-progress-fill {
     height: 100%;
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     border-radius: 4px;
     transition: width 0.3s ease;
 }
@@ -338,13 +338,13 @@
 
 .challenge-milestone-name {
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     font-size: 14px;
 }
 
 .challenge-milestone-score {
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     font-size: 14px;
     text-align: right;
 }
@@ -368,7 +368,7 @@
     gap: 8px;
     margin-top: 12px;
     font-size: 14px;
-    color: #1A1A1A;
+    color: #1E2A33;
     cursor: pointer;
 }
 
@@ -390,7 +390,7 @@
 
 .challenge-timeline-progress {
     height: 100%;
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     border-radius: 2px;
     transition: width 0.3s ease;
 }
@@ -419,7 +419,7 @@
 
 .challenge-timeline-name {
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     font-size: 14px;
 }
 
@@ -460,7 +460,7 @@
 
 .challenge-distribution-name {
     font-size: 13px;
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 .challenge-distribution-bar-wrap {
@@ -472,7 +472,7 @@
 
 .challenge-distribution-bar {
     height: 100%;
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     border-radius: 3px;
 }
 
@@ -522,7 +522,7 @@
 .challenge-parent-stat-val {
     font-size: 22px;
     font-weight: 700;
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 .challenge-parent-stat-label {
@@ -556,7 +556,7 @@
 .challenge-empty-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     margin-bottom: 8px;
 }
 
@@ -607,7 +607,7 @@
 .challenge-modal-title {
     font-size: 18px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 .challenge-modal-close {
@@ -623,7 +623,7 @@
 }
 
 .challenge-modal-close:hover {
-    color: #1A1A1A;
+    color: #1E2A33;
 }
 
 .challenge-modal-info {
@@ -652,7 +652,7 @@
     border-radius: 8px;
     font-size: 14px;
     background: #FFFFFF;
-    color: #1A1A1A;
+    color: #1E2A33;
     font-family: inherit;
     box-sizing: border-box;
 }
@@ -664,7 +664,7 @@ textarea.challenge-input {
 
 .challenge-input:focus {
     outline: none;
-    border-color: #1A1A1A;
+    border-color: #4AA894;
 }
 
 .challenge-form-inline {
@@ -713,7 +713,7 @@ textarea.challenge-input {
 }
 
 .challenge-grade-option:hover {
-    border-color: #1A1A1A;
+    border-color: #4AA894;
     background: #FAFAFA;
 }
 
@@ -725,7 +725,7 @@ textarea.challenge-input {
 .challenge-grade-option-name {
     font-size: 16px;
     font-weight: 600;
-    color: #1A1A1A;
+    color: #1E2A33;
     margin-bottom: 4px;
 }
 
@@ -752,9 +752,9 @@ textarea.challenge-input {
 }
 
 .challenge-grade-pill.active {
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     color: #FFFFFF;
-    border-color: #1A1A1A;
+    border-color: #4AA894;
 }
 
 /* ===== 图标选择 ===== */
@@ -783,7 +783,7 @@ textarea.challenge-input {
 }
 
 .challenge-icon-btn.active {
-    border-color: #1A1A1A;
+    border-color: #4AA894;
     background: #FAFAFA;
 }
 
@@ -834,9 +834,9 @@ textarea.challenge-input {
     margin-bottom: 6px;
 }
 
-.progress-bar {
+.progress-bar-wrap .progress-bar {
     height: 100%;
-    background: #1A1A1A;
+    background: linear-gradient(135deg, #6FD3BE, #4AA894);
     border-radius: 4px;
     transition: width 0.3s ease;
 }
@@ -845,3 +845,19 @@ textarea.challenge-input {
     font-size: 12px;
     color: #8C8C8C;
 }
+
+/* ==================== 薄荷绿统一主题层（与 dashboard 保持一致） ==================== */
+.page-challenges-wrap,
+.challenge-body {
+    font-family: "Nunito", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    color: #1E2A33;
+}
+.challenge-topbar {
+    border-radius: 16px;
+    border-color: rgba(30, 42, 51, .08);
+    box-shadow: 0 1px 2px rgba(30, 42, 51, .04), 0 12px 30px rgba(30, 42, 51, .07);
+}
+.challenge-select { border-radius: 10px; }
+.challenge-select:focus-visible { outline: 2px solid #5BBFAA; outline-offset: 2px; }
+.challenge-grade-tag { background: rgba(91, 191, 170, .14); color: #4AA894; }
+.challenge-home-entry-card:hover { background: #F6FAFB; }

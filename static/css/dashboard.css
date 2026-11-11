@@ -1518,3 +1518,116 @@ body {
   .loading-dots span { opacity: 1 !important; transform: none !important; }
   .message-buddy, .message-user { opacity: 1 !important; transform: none !important; }
 }
+
+/* ==================== 薄荷绿品牌主题层（StudyPal 视觉统一） ====================
+   只做「皮肤覆盖」，不改变任何布局与交互逻辑；放在文件末尾以确保覆盖上面的原始黑白样式。
+   设计基准与 login/register 一致：薄荷绿 + 冷白底 + 大圆角 + 柔和阴影。 */
+:root {
+  --sp-bg: #F4F8FA;
+  --sp-surface: #FFFFFF;
+  --sp-surface-soft: #EEF4F6;
+  --sp-mist: #F6FAFB;
+  --sp-ink: #1E2A33;
+  --sp-ink-2: #3D4F5C;
+  --sp-muted: #6B7E8D;
+  --sp-line: rgba(30, 42, 51, .08);
+  --sp-line-strong: rgba(30, 42, 51, .14);
+  --sp-brand: #5BBFAA;
+  --sp-brand-2: #4AA894;
+  --sp-brand-ghost: rgba(91, 191, 170, .14);
+  --sp-brand-grad: linear-gradient(135deg, #6FD3BE, #4AA894);
+  --sp-card-radius: 16px;
+  --sp-shadow: 0 1px 2px rgba(30, 42, 51, .04), 0 12px 30px rgba(30, 42, 51, .07);
+  --sp-shadow-sm: 0 1px 2px rgba(30, 42, 51, .05), 0 4px 12px rgba(30, 42, 51, .05);
+}
+
+body {
+  background: var(--sp-bg);
+  color: var(--sp-ink);
+  font-family: "Nunito", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+}
+
+:focus-visible { outline: 2px solid var(--sp-brand); outline-offset: 2px; }
+
+/* 卡片：大圆角 + 轻阴影 + 细腻描边 */
+.card, .stat-card, .quick-card, .task-list, .modal-content {
+  background: var(--sp-surface);
+  border: 1px solid var(--sp-line);
+  border-radius: var(--sp-card-radius);
+  box-shadow: var(--sp-shadow);
+}
+.stat-card, .quick-card { transition: transform .18s ease, box-shadow .18s ease; }
+.stat-card:hover, .quick-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(30, 42, 51, .10);
+}
+
+.sidebar, .right-sidebar { background: var(--sp-surface); border-color: var(--sp-line); }
+.logo-title, .page-title, .card-header-title, .stat-value, .quick-title { color: var(--sp-ink); }
+.card-title, .stat-label, .goal-label, .quick-desc { color: var(--sp-muted); }
+
+/* 图标 chip：把裸 emoji 收进柔和底色里，贴近 login 页的图标语言 */
+.logo-icon, .stat-icon, .quick-icon, .exam-stat-icon {
+  background: var(--sp-brand-ghost);
+  color: var(--sp-brand-2);
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.logo-icon { width: 40px; height: 40px; font-size: 22px; }
+.stat-icon { width: 42px; height: 42px; font-size: 20px; margin-bottom: 10px; }
+.quick-icon { width: 46px; height: 46px; font-size: 22px; margin-bottom: 10px; }
+.exam-stat-icon { width: 38px; height: 38px; font-size: 18px; margin-bottom: 8px; }
+
+/* 导航 */
+.nav-item { color: var(--sp-ink-2); border-radius: 12px; }
+.nav-item:hover { background: var(--sp-surface-soft); color: var(--sp-ink); }
+.nav-item.active { background: var(--sp-brand-ghost); color: var(--sp-brand-2); font-weight: 600; }
+.nav-icon { display: grid; place-items: center; color: inherit; }
+.nav-icon svg { width: 19px; height: 19px; }
+
+/* 按钮 */
+.btn-primary { background: var(--sp-brand-grad); color: #fff; border: none; box-shadow: 0 8px 20px var(--sp-brand-ghost); }
+.btn-primary:hover { background: var(--sp-brand-grad); opacity: .94; transform: translateY(-1px); }
+.btn-primary:active { transform: translateY(0) scale(.99); }
+.btn-ghost { border: 1px solid var(--sp-line-strong); color: var(--sp-ink); background: transparent; }
+.btn-ghost:hover { background: var(--sp-brand-ghost); border-color: var(--sp-brand); color: var(--sp-brand-2); }
+.btn-new-conversation { background: var(--sp-brand-grad); }
+.btn-new-conversation:hover { background: var(--sp-brand-grad); opacity: .94; }
+
+/* 进度与状态 */
+.progress-bar { background: #E6EFF1; border-radius: 6px; }
+.progress-fill { background: var(--sp-brand-grad); border-radius: 6px; }
+.streak-badge, .timeline-badge { background: var(--sp-brand-ghost); color: var(--sp-brand-2); }
+.level-badge, .buddy-level-badge { background: var(--sp-brand-grad); color: #fff; border-radius: 999px; }
+.pomo-ring-fill { stroke: var(--sp-brand); }
+.score-target { background: var(--sp-mist); border-radius: 12px; }
+.empty-chart { background: var(--sp-mist); border-radius: 12px; min-height: 120px; }
+.empty-chart::after { content: "暂无数据，学习后自动生成"; color: var(--sp-muted); font-size: 12px; }
+.tip-card { background: var(--sp-mist); }
+
+/* 成长页倒计时卡：黑底改薄荷渐变 */
+.exam-countdown-card { background: var(--sp-brand-grad); color: #fff; border-radius: var(--sp-card-radius); }
+.exam-countdown-card .countdown-label,
+.exam-countdown-card .countdown-unit,
+.exam-countdown-card .countdown-date { color: rgba(255, 255, 255, .88); }
+.exam-countdown-card .countdown-date { border-top-color: rgba(255, 255, 255, .28); }
+
+/* 标签页 / 复选 / 列表项选中态 */
+.filter-tab.active { background: var(--sp-brand-ghost); color: var(--sp-brand-2); }
+.filter-tab:hover:not(.active) { background: var(--sp-surface-soft); color: var(--sp-ink); }
+.task-checkbox.checked { background: var(--sp-brand); border-color: var(--sp-brand); }
+.task-checkbox.checked::after { border-color: #fff; }
+.conversation-item.active, .roster-item.active,
+.my-buddy-item.active, .history-item.active {
+  background: var(--sp-brand-ghost);
+  border-color: var(--sp-brand);
+}
+.conversation-item:hover, .roster-item:hover, .my-buddy-item:hover, .history-item:hover { background: var(--sp-surface-soft); }
+.quick-reply:hover, .quick-chip:hover {
+  background: var(--sp-brand); color: #fff; border-color: var(--sp-brand);
+}
+
+/* 搜索框聚焦 */
+.search-box:focus-within { border-color: var(--sp-brand); box-shadow: 0 0 0 3px var(--sp-brand-ghost); }
