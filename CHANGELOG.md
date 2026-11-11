@@ -28,6 +28,13 @@
   - 密码哈希由无盐 SHA-256 改为 PBKDF2-HMAC-SHA256（20 万次迭代 + 随机盐），旧哈希在登录时自动升级
   - Token 由「只解析不校验」改为 HMAC-SHA256 签名校验，修复身份伪造漏洞
   - `src/data/users.json` 移出版本控制，清除 15 个自动化测试残留账号
+- **搭子的记忆本**：新增三层记忆（用户画像 / 场景记忆 / 对话摘要）与「记忆本」页面
+  - 新增 `src/buddy/memory_extractor.py`，从对话按规则抽取值得长期记住的信息并写入，寒暄等噪音不写入（`4b22ed5`）
+  - 新增 `GET/POST /api/buddy/memory`（记忆概览 / 新增场景记忆）与 `GET /api/buddy/memory/search`（按主题搜索）
+- **修改密码**：新增 `POST /api/auth/password`（原密码 + 新密码）与「设置」页改密入口，此前项目无任何改密能力（`42f4bc5`）
+- **日记 / 任务服务端落库**：日记与任务改为服务端 JSON 存储，并接入搭子的记忆本（`34ea918`）
+- **主动关心冷却持久化**：关心触发状态落盘至 `data/caring_state.json` 并呈现到界面（`2cee779`）
+- **我的挑战接入主界面**：把此前不可达的挑战模块接进主界面（`static/js/api.js` + `pages/challenges.js` + `challenge.css`）（`6c40525`）
 
 ### Fixed
 
@@ -40,16 +47,19 @@
 - 修复情绪量表契约冲突：`EMOTION_LABELS` 此前被引用但未定义；`insights.py` 用 5 元素数组索引 10 档量表导致 `IndexError`
 - 修复前端角色数据表缺 2 个角色（点「戏精」「阿正」会 JS 崩溃）与 `xuejie`/`senior` 别名断裂
 - 修复未知路径不返回 404（`not_found` 未设置状态码）
+- 界面可访问性：按设计判据修复 38 项可用性与可访问性缺陷（对比度、焦点可见、ARIA 标注、键盘可达等）（`e942c20`）
+- 部署：根治签名密钥并发竞态（多 worker 下统一密钥），并清理 `docker-compose.yml` 中无人使用的空跑服务（`ca95cc8`）
 
 ### Removed
 
 - 删除 SQLAlchemy 死代码层：`src/db.py`、`src/db_service.py`、`src/migrate.py`、`src/models/`
 - 删除 5 个零引用孤儿模块：`validators.py`、`role_identity.py`、`buddy_tools.py`、`option_parser.py`、`buddy_conversations.py`
 - 删除陈旧日志与失效文件：`flask.err`、`test_results.txt`、`package-lock.json`
+- 删除前端死链路资源（约 5548 行）并修复由此产生的静态资源 404（`9d68e09`）
 
 ### Docs
 
-- 重写 `README.md`：结构与 API 清单以代码为准（110 个 `/api/*` 端点、13 个预设模型、53 个成就、10 档情绪量表、两学段学科）
+- 重写 `README.md`：结构与 API 清单以代码为准（112 个 `/api/*` 端点、13 个预设模型、53 个成就、10 档情绪量表、两学段学科）
 - 重写 `PRODUCT.md`：技术栈改为事实描述（JSON 存储、非 JWT 的自制 Token、无支付流程），并如实标注 v3.0 的 SQLAlchemy 迁移已回退
 - `DESIGN_DOC.md` 保留为历史设计稿，顶部新增与当前实现的差异对照表
 

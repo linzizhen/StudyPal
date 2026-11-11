@@ -20,6 +20,8 @@ StudyPal 是一款面向**小学到初中**学生的 AI 学习搭子应用。核
 4. **任务与计划** — 待办事项 + 学习计划
 5. **我的挑战** — 小学/初中两学段差异化挑战体系
 6. **成就与成长时间线** — 激励持续学习
+7. **搭子的记忆本** — 三层记忆（用户画像 / 场景记忆 / 对话摘要）+ 对话自动抽取，让搭子记住孩子说过的事
+8. **账户与设置** — 注册登录、修改密码、个人偏好与数据导出
 
 ---
 
@@ -59,6 +61,7 @@ StudyPal/
 │   │   ├── buddy_roles.py     # 6 种角色定义 + 风格规则
 │   │   ├── buddy_profile.py   # 档案管理
 │   │   ├── buddy_memory.py    # 三层记忆
+│   │   ├── memory_extractor.py # 对话记忆抽取
 │   │   └── caring_engine.py   # 主动关心引擎
 │   ├── core/
 │   │   ├── buddy.py       # 搭子系统门面
@@ -86,7 +89,7 @@ StudyPal/
 
 ## API 文档
 
-后端共注册 110 个 `/api/*` 端点。以下列出主要接口。
+后端共注册 112 个 `/api/*` 端点。以下列出主要接口。
 
 ### 认证接口
 
@@ -135,6 +138,19 @@ StudyPal/
 
 ```
 Authorization: Bearer <token>
+```
+
+#### POST /api/auth/password — 修改密码
+
+需登录（请求头带 `Authorization: Bearer <token>`）。
+
+**请求体：**
+
+```json
+{
+  "old_password": "原密码",
+  "new_password": "新密码"
+}
 ```
 
 ---
@@ -186,6 +202,14 @@ Authorization: Bearer <token>
 #### GET /api/buddy/roles — 获取所有角色
 
 #### POST /api/buddy/role/switch — 切换角色
+
+#### GET/POST /api/buddy/memory — 记忆概览 / 新增场景记忆
+
+`GET` 返回记忆概览，可选查询参数 `topic` 过滤；`POST` 新增一条场景记忆。
+
+#### GET /api/buddy/memory/search — 按主题搜索记忆
+
+查询参数：`q`（关键词）、`limit`（返回条数，默认 5）。
 
 ---
 
@@ -294,7 +318,7 @@ AI_API_KEY=your-api-key
 docker-compose up -d
 ```
 
-> 注意：`docker-compose.yml` 中定义了 PostgreSQL（`db`）与 Redis（`cache`）服务，但当前代码使用 JSON 文件存储，**不依赖这两个服务**。另有 Nginx 服务引用了 `nginx.conf` 与 `ssl/` 目录，这两个文件不在仓库中，若要启用需自行补齐。
+> 注意：`docker-compose.yml` 只定义单个 `web` 服务，通过 `./data` 卷持久化 JSON 数据；当前代码不依赖外部数据库或缓存，因此不再定义 PostgreSQL / Redis / Nginx 等服务。多 worker 部署必须显式设置 `SECRET_KEY`，否则 Token 会在重启后失效。
 
 ### 传统部署
 
@@ -350,6 +374,12 @@ python -m pytest tests/ -v
 - 成就系统去除 12 个考研专属成就，替换为习惯养成向成就
 - 修复 9 个 500 端点、认证装饰器顺序错误、Token 伪造漏洞与密码无盐哈希
 - 引入 pytest 回归测试套件
+- 新增修改密码能力（`POST /api/auth/password`）
+- 打通搭子的记忆本：三层记忆 + 记忆抽取写入链路（`src/buddy/memory_extractor.py`）
+- 日记与任务改为服务端落库；主动关心冷却状态持久化至 `data/caring_state.json` 并呈现到界面
+- 我的挑战模块接入主界面（此前为不可达死链路）
+- 按设计判据修复 38 项界面可用性与可访问性缺陷
+- 根治部署签名密钥并发竞态，清理 `docker-compose.yml` 空跑服务
 
 ### v3.1 (2026-05-25)
 
