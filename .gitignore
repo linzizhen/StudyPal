@@ -57,9 +57,14 @@ src/data/
 .pytest-tmp/
 .pytest-data-backup/
 
-# 提交信息临时文件
+# 鎻愪氦淇℃伅涓存椂鏂囦欢
 .msg.txt
 commit_msg_tmp.txt
 
 .cmsg.txt
 *.cmsg.txt
+
+# 璁捐棰勮涓庢埅鍥句骇鐗╋紙鏈湴璋冭瘯鐢紝涓嶅叆搴擄級
+design-preview.html
+design-after.png
+running-app.png
