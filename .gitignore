@@ -68,3 +68,9 @@ commit_msg_tmp.txt
 design-preview.html
 design-after.png
 running-app.png
+screenshots/
+.ds-master.md
+
+# 测试缓存
+.pytest_cache/
+pytest-cache-files-*/
