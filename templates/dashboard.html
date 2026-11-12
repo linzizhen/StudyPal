@@ -9,6 +9,9 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="/static/css/dashboard.css">
     <link rel="stylesheet" href="/static/css/challenge.css">
+    <link rel="stylesheet" href="/static/css/redesign.css">
+    <link rel="stylesheet" href="/static/css/polish.css">
+    <link rel="stylesheet" href="/static/css/pages.css">
 </head>
 <body>
     <!-- ==================== 左侧导航栏 ==================== -->
@@ -286,9 +289,9 @@
         <!-- ---- 我的成长页 ---- -->
         <div class="page-section hidden" id="section-growth">
             <div class="page-header">
-                <div class="page-title">
-                    <span class="title-icon">🌱</span>
-                    <span>我的成长</span>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">🌱</span><span>我的成长</span></div>
+                    <div class="title-sub">记录每一天的坚持，看着自己一点点变强</div>
                 </div>
                 <button class="btn-primary" id="btn-add-subject">+ 添加科目</button>
             </div>
@@ -298,6 +301,10 @@
                 <div class="countdown-number" id="growth-streak">0</div>
                 <div class="countdown-unit">天</div>
                 <div class="countdown-date" id="growth-encourage">每天来学一点，就很了不起啦</div>
+                <div class="growth-extra">
+                    <span class="growth-chip">📚 本周学习 <b id="growth-stat-hours">0.0</b> 小时</span>
+                    <span class="growth-chip">⭐ 本周星星 <b id="growth-stat-stars">0</b> 颗</span>
+                </div>
             </div>
 
             <div class="two-column">
@@ -333,47 +340,101 @@
             <div class="page-header">
                 <div class="page-title">
                     <span class="title-icon">⏱️</span>
-                    <span>番茄专注</span>
-                </div>
-            </div>
-            <div class="pomo-center">
-                <div class="pomo-ring-wrap">
-                    <svg class="pomo-ring" width="200" height="200" viewBox="0 0 200 200">
-                        <circle cx="100" cy="100" r="90" fill="none" stroke-width="10" class="pomo-ring-bg"/>
-                        <circle cx="100" cy="100" r="90" fill="none" stroke-width="10" stroke-linecap="round" class="pomo-ring-fill" id="pomo-ring-fill"
-                            stroke-dasharray="565.48" stroke-dashoffset="0"/>
-                    </svg>
-                    <div class="pomo-time-display">
-                        <div class="pomo-time" id="pomo-time">25:00</div>
-                        <div class="pomo-status" id="pomo-status">准备开始</div>
+                    <div class="title-stack">
+                        <h1 class="title-main">番茄专注</h1>
+                        <p class="title-sub">一次只做一件事，专注 25 分钟，然后好好休息</p>
                     </div>
                 </div>
-                <div class="pomo-controls">
-                    <button class="btn-primary btn-lg" id="btn-pomo-toggle">开始</button>
-                    <button class="btn-ghost btn-lg" id="btn-pomo-reset">重置</button>
-                </div>
-                <div class="pomo-config">
-                    <label>专注时长(分钟): <span id="pomo-duration-text">25</span></label>
-                    <input type="range" min="5" max="60" step="5" value="25" id="pomo-duration-input" aria-label="专注时长（分钟）">
-                </div>
+                <span class="streak-badge" id="pomo-today-count">今日 0 个番茄</span>
             </div>
-            <div class="card">
-                <div class="card-header-title">📋 今日完成记录</div>
-                <div class="empty-state" id="pomo-history">暂无完成记录</div>
+
+            <div class="pomo-grid">
+                <!-- 左：专注主卡 -->
+                <section class="card pomo-focus-card">
+                    <div class="pomo-focus-top">
+                        <span class="pomo-badge">当前任务</span>
+                        <span class="pomo-task-name" id="pomo-task-name">自由专注</span>
+                    </div>
+                    <div class="pomo-ring-wrap">
+                        <svg class="pomo-ring" width="260" height="260" viewBox="0 0 200 200" role="img" aria-label="番茄钟进度环">
+                            <circle cx="100" cy="100" r="90" fill="none" stroke-width="10" class="pomo-ring-bg"/>
+                            <circle cx="100" cy="100" r="90" fill="none" stroke-width="10" stroke-linecap="round" class="pomo-ring-fill" id="pomo-ring-fill"
+                                stroke-dasharray="565.48" stroke-dashoffset="0"/>
+                        </svg>
+                        <div class="pomo-time-display">
+                            <div class="pomo-time" id="pomo-time">25:00</div>
+                            <div class="pomo-status" id="pomo-status">准备开始</div>
+                        </div>
+                    </div>
+                    <div class="pomo-presets" role="group" aria-label="专注时长预设">
+                        <button type="button" class="pomo-chip active" data-duration="25">25 分钟</button>
+                        <button type="button" class="pomo-chip" data-duration="45">45 分钟</button>
+                        <button type="button" class="pomo-chip" data-duration="60">60 分钟</button>
+                    </div>
+                    <div class="pomo-controls">
+                        <button class="btn-primary btn-lg" id="btn-pomo-toggle">开始专注</button>
+                        <button class="btn-ghost btn-lg" id="btn-pomo-reset">重置</button>
+                    </div>
+                    <div class="pomo-config">
+                        <label for="pomo-duration-input">自定义：<span id="pomo-duration-text">25</span> 分钟</label>
+                        <input type="range" min="5" max="60" step="5" value="25" id="pomo-duration-input" aria-label="专注时长（分钟）">
+                    </div>
+                </section>
+
+                <!-- 右：今日统计 + 记录 + 贴士 -->
+                <aside class="pomo-side">
+                    <div class="card">
+                        <div class="card-header-title">今日专注</div>
+                        <div class="pomo-stat-row">
+                            <div class="pomo-stat">
+                                <div class="pomo-stat-value" id="pomo-stat-count">0</div>
+                                <div class="pomo-stat-label">完成番茄</div>
+                            </div>
+                            <div class="pomo-stat">
+                                <div class="pomo-stat-value" id="pomo-stat-min">0</div>
+                                <div class="pomo-stat-label">专注分钟</div>
+                            </div>
+                            <div class="pomo-stat">
+                                <div class="pomo-stat-value" id="pomo-stat-streak">1</div>
+                                <div class="pomo-stat-label">连续天数</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header-title">今日完成记录</div>
+                        <div class="empty-state" id="pomo-history">还没有完成记录，开始第一个番茄吧</div>
+                    </div>
+
+                    <div class="card pomo-tip-card">
+                        <div class="pomo-tip-icon">💡</div>
+                        <div>
+                            <div class="pomo-tip-title">番茄小贴士</div>
+                            <div class="pomo-tip-text">专注 25 分钟，休息 5 分钟。每完成 4 个番茄，休息得久一点，效果更好。</div>
+                        </div>
+                    </div>
+                </aside>
             </div>
         </div>
 
         <!-- ---- 待办任务页 ---- -->
         <div class="page-section hidden" id="section-tasks">
             <div class="page-header">
-                <div class="page-title">
-                    <span class="title-icon">✅</span>
-                    <span>待办任务</span>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">✅</span><span>待办任务</span></div>
+                    <div class="title-sub">把要做的写下来，一件一件完成它</div>
                 </div>
                 <div class="badge-row">
                     <span class="tag" id="tasks-pending-count">0 待完成</span>
                     <span class="tag" id="tasks-completed-count">0 已完成</span>
                 </div>
+            </div>
+            <div class="card task-summary">
+                <div class="task-progress-meta">
+                    <span>今日进度</span>
+                    <span><b id="task-progress-text">0 / 0</b> · <b id="task-progress-pct">0%</b></span>
+                </div>
+                <div class="task-progress"><div class="task-progress-fill" id="task-progress-fill" style="width:0%"></div></div>
             </div>
             <div class="add-task-bar card">
                 <input type="text" id="new-task-input" aria-label="新任务内容" placeholder="添加新任务…" class="task-input">
@@ -392,9 +453,9 @@
         <!-- ---- 学习日记页 ---- -->
         <div class="page-section hidden" id="section-diary">
             <div class="page-header">
-                <div class="page-title">
-                    <span class="title-icon">📝</span>
-                    <span>学习日记</span>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">📝</span><span>学习日记</span></div>
+                    <div class="title-sub">记下今天的心情与收获，给未来的自己留封信</div>
                 </div>
                 <div class="diary-actions">
                     <button class="btn-ghost" id="btn-diary-history">📋 历史记录</button>
@@ -703,9 +764,9 @@
         <!-- ---- 数据统计页 ---- -->
         <div class="page-section hidden" id="section-statistics">
             <div class="page-header">
-                <div class="page-title">
-                    <span class="title-icon">📈</span>
-                    <span>数据统计</span>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">📈</span><span>数据统计</span></div>
+                    <div class="title-sub" id="stats-trend-text">用真实数据看看你的学习节奏，稳稳进步</div>
                 </div>
             </div>
             <div class="stats-row">
@@ -722,7 +783,7 @@
                 <div class="stat-card">
                     <div class="stat-icon">🎯</div>
                     <div class="stat-value" id="stats-total-pomo">0</div>
-                    <div class="stat-label">番茄钟总数(个)</div>
+                    <div class="stat-label">学习次数(次)</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-icon">📊</div>
@@ -730,18 +791,49 @@
                     <div class="stat-label">任务完成率</div>
                 </div>
             </div>
-            <div class="card">
-                <div class="card-header-title">📈 本周学习时长趋势</div>
-                <div class="empty-chart" id="stats-line-chart"></div>
+            <div class="stats-gauges">
+                <div class="card gauge-card">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 120 120" class="gauge-svg" aria-hidden="true">
+                            <circle class="gauge-track" cx="60" cy="60" r="52"/>
+                            <circle class="gauge-fill" id="g-today-fill" cx="60" cy="60" r="52"/>
+                        </svg>
+                        <div class="gauge-center"><span id="g-today-pct">0%</span></div>
+                    </div>
+                    <div class="gauge-title">今日目标</div>
+                    <div class="gauge-sub" id="g-today-sub">0.0 / 2 h</div>
+                </div>
+                <div class="card gauge-card">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 120 120" class="gauge-svg" aria-hidden="true">
+                            <circle class="gauge-track" cx="60" cy="60" r="52"/>
+                            <circle class="gauge-fill" id="g-week-fill" cx="60" cy="60" r="52"/>
+                        </svg>
+                        <div class="gauge-center"><span id="g-week-pct">0%</span></div>
+                    </div>
+                    <div class="gauge-title">本周目标</div>
+                    <div class="gauge-sub" id="g-week-sub">0.0 / 14 h</div>
+                </div>
+                <div class="card gauge-card">
+                    <div class="gauge-ring">
+                        <svg viewBox="0 0 120 120" class="gauge-svg" aria-hidden="true">
+                            <circle class="gauge-track" cx="60" cy="60" r="52"/>
+                            <circle class="gauge-fill" id="g-task-fill" cx="60" cy="60" r="52"/>
+                        </svg>
+                        <div class="gauge-center"><span id="g-task-pct">0%</span></div>
+                    </div>
+                    <div class="gauge-title">任务完成率</div>
+                    <div class="gauge-sub" id="g-task-sub">0 / 0 项</div>
+                </div>
             </div>
         </div>
 
         <!-- ---- 搭子的记忆本页 ---- -->
         <div class="page-section hidden" id="section-memory">
             <div class="page-header">
-                <div class="page-title">
-                    <span class="title-icon">🧠</span>
-                    <span>搭子的记忆本</span>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">🧠</span><span>搭子的记忆本</span></div>
+                    <div class="title-sub">搭子会记住你在意的事，越聊越懂你</div>
                 </div>
             </div>
 
@@ -789,14 +881,35 @@
             <div class="page-header">
                 <h1 class="page-title">🏆 我的挑战</h1>
             </div>
-            <!-- 挑战模块自己渲染内容；此容器用于挂载 -->
-            <div id="page-challenges" class="page-challenges-wrap"></div>
+            <!-- 挑战模块脚手架：challenges.js 会往下列各容器内渲染内容 -->
+            <div id="page-challenges" class="page-challenges-wrap">
+                <div id="challenges-topbar"></div>
+                <div class="challenge-body">
+                    <div class="challenge-main-col">
+                        <div id="challenges-main"></div>
+                        <div id="challenges-overview"></div>
+                        <div id="challenges-subjects"></div>
+                        <div id="challenges-milestones"></div>
+                        <div id="challenges-timeline"></div>
+                    </div>
+                    <div class="challenge-side-col">
+                        <div id="challenges-companion"></div>
+                        <div id="challenges-parent"></div>
+                        <div id="challenges-distribution"></div>
+                        <div id="challenges-quote"></div>
+                        <div id="challenges-sidebar"></div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- ---- 设置页 ---- -->
         <div class="page-section hidden" id="section-settings">
             <div class="page-header">
-                <h1 class="page-title">⚙️ 设置</h1>
+                <div class="title-stack">
+                    <div class="title-main"><span class="title-icon">⚙️</span><span>设置</span></div>
+                    <div class="title-sub">调整学习目标、搭子与 AI 配置，让 StudyPal 更懂你</div>
+                </div>
             </div>
 
             <!-- 用户设置 -->
@@ -1014,5 +1127,7 @@
     <script src="/static/js/api.js"></script>
     <script src="/static/js/pages/challenges.js"></script>
     <script src="/static/js/dashboard.js"></script>
+    <script src="/static/js/ui-enhance.js"></script>
+    <script src="/static/js/interactions.js"></script>
 </body>
 </html>

@@ -1,0 +1,207 @@
+/* ============================================================
+ * StudyPal 视觉与交互打磨层（polish.css）
+ * 依赖 redesign.css 的 --brand-* 变量；加载顺序最末（覆盖前两者）
+ * 目标：更细腻的视觉反馈与交互反馈（悬停 / 按下 / 聚焦 / 切换 / 提示）
+ * ============================================================ */
+
+:root {
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+  --ease-in-out: cubic-bezier(.4, 0, .2, 1);
+  --dur-1: 120ms;
+  --dur-2: 200ms;
+  --dur-3: 320ms;
+}
+
+html { scroll-behavior: smooth; }
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background:
+    radial-gradient(1200px 620px at 100% -8%, #E4F7F2 0%, rgba(228,247,242,0) 60%),
+    radial-gradient(900px 520px at -8% 6%, #EAF5FB 0%, rgba(234,245,251,0) 55%),
+    var(--bg, #EFF7F5);
+  background-attachment: fixed;
+}
+
+/* 可点击元素统一指针 */
+button, a, .btn-primary, .btn-ghost, .btn-secondary, .quick-card,
+.nav-item, .task-item, .filter-tab, .pomo-chip, .mood-btn,
+.challenge-btn-primary, .challenge-btn-ghost, .quick-reply, .quick-chip { cursor: pointer; }
+
+/* 统一可见焦点（覆盖旧的黑描边） */
+a:focus-visible, button:focus-visible, .nav-item:focus-visible,
+.quick-card:focus-visible, .task-item:focus-visible,
+input:focus-visible, textarea:focus-visible, select:focus-visible {
+  outline: 3px solid rgba(13, 148, 136, .55);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* ---------- 按钮：悬停上浮 + 按下回弹 + 光泽 ---------- */
+.btn-primary, .btn-secondary, .challenge-btn-primary {
+  position: relative;
+  overflow: hidden;
+  transition: transform var(--dur-2) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out),
+              filter var(--dur-2) var(--ease-out);
+  will-change: transform;
+}
+.btn-primary:hover, .challenge-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 26px rgba(13, 148, 136, .28);
+  filter: saturate(1.06);
+}
+.btn-primary:active, .btn-secondary:active, .challenge-btn-primary:active {
+  transform: translateY(0) scale(.97);
+  box-shadow: 0 4px 10px rgba(13, 148, 136, .2);
+  transition-duration: 80ms;
+}
+.btn-ghost:hover, .btn-ghost:focus-visible { transform: translateY(-1px); }
+
+/* 点击水波纹（由 interactions.js 注入 .sp-ripple） */
+.sp-ripple {
+  position: absolute;
+  border-radius: 50%;
+  transform: scale(0);
+  opacity: .55;
+  background: rgba(255, 255, 255, .6);
+  pointer-events: none;
+  animation: spRipple .55s var(--ease-out) forwards;
+}
+@keyframes spRipple { to { transform: scale(2.8); opacity: 0; } }
+
+/* ---------- 卡片悬停 ---------- */
+.quick-card, .task-item, .my-buddy-item, .roster-item, .history-item, .conversation-item {
+  transition: transform var(--dur-2) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out),
+              background-color var(--dur-2) var(--ease-out),
+              border-color var(--dur-2) var(--ease-out);
+}
+.quick-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(15, 46, 43, .1); }
+.task-item:hover { background: rgba(20, 184, 166, .05); }
+
+/* ---------- 导航项 ---------- */
+.nav-item {
+  transition: background-color var(--dur-2) var(--ease-out),
+              color var(--dur-2) var(--ease-out),
+              transform var(--dur-1) var(--ease-out);
+}
+.nav-item:hover { transform: translateX(2px); }
+.nav-item .nav-icon svg { transition: transform var(--dur-2) var(--ease-out); }
+.nav-item:hover .nav-icon svg { transform: scale(1.1); }
+
+/* ---------- 输入框：聚焦环 ---------- */
+input:not([type=range]):not([type=checkbox]):not([type=radio]), textarea, select {
+  transition: border-color var(--dur-2) var(--ease-out),
+              box-shadow var(--dur-2) var(--ease-out),
+              background-color var(--dur-2) var(--ease-out);
+}
+input:not([type=range]):not([type=checkbox]):not([type=radio]):focus-visible,
+textarea:focus-visible, select:focus-visible {
+  outline: none;
+  border-color: var(--brand-600, #14B8A6);
+  box-shadow: 0 0 0 4px rgba(13, 148, 136, .14);
+}
+
+/* ---------- 任务勾选完成弹跳 ---------- */
+.task-checkbox {
+  transition: transform var(--dur-2) var(--ease-out),
+              background-color var(--dur-2) var(--ease-out),
+              border-color var(--dur-2) var(--ease-out);
+}
+.task-checkbox.checked { animation: spPop .32s var(--ease-out); }
+@keyframes spPop { 0% { transform: scale(.8); } 55% { transform: scale(1.14); } 100% { transform: scale(1); } }
+.task-item.completed .task-title { color: var(--sp-muted, #6B7E8D); text-decoration: line-through; }
+
+/* ---------- 进度条平滑 ---------- */
+.progress-fill,
+.challenge-term-progress-fill,
+.challenge-subject-bar-fill,
+.challenge-subject-progress-fill { transition: width .6s var(--ease-out); }
+
+/* ---------- 页面切换淡入上移 ---------- */
+.page-section:not(.hidden) { animation: spPageIn var(--dur-3) var(--ease-out) both; }
+@keyframes spPageIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+/* ---------- 进入视口的卡片（interactions.js 添加 .sp-reveal/.sp-in） ---------- */
+.sp-reveal { opacity: 0; transform: translateY(10px); }
+.sp-reveal.sp-in { opacity: 1; transform: none; transition: opacity .45s var(--ease-out), transform .45s var(--ease-out); }
+
+/* ---------- 骨架屏 ---------- */
+.sp-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #E9F2F0;
+  border-radius: 10px;
+  color: transparent !important;
+}
+.sp-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .65), transparent);
+  animation: spShimmer 1.2s infinite;
+}
+@keyframes spShimmer { 100% { transform: translateX(100%); } }
+
+/* ---------- 按钮加载态 ---------- */
+.sp-loading { position: relative; color: transparent !important; pointer-events: none; }
+.sp-loading::after {
+  content: "";
+  position: absolute;
+  width: 16px; height: 16px;
+  top: 50%; left: 50%;
+  margin: -8px 0 0 -8px;
+  border: 2px solid rgba(255, 255, 255, .55);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spSpin .7s linear infinite;
+}
+@keyframes spSpin { to { transform: rotate(360deg); } }
+
+/* ---------- Toast（覆盖 JS 内联样式，统一为薄荷卡片） ---------- */
+#study-pal-toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  z-index: 9999;
+  transform: translateX(-50%) translateY(14px) !important;
+  opacity: 0;
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  max-width: min(90vw, 460px);
+  padding: 12px 18px !important;
+  background: rgba(255, 255, 255, .98) !important;
+  color: var(--ink, #0F2E2B) !important;
+  border: 1px solid var(--line, #E3F0ED) !important;
+  border-radius: 14px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 10px 30px rgba(15, 46, 43, .16) !important;
+  pointer-events: none;
+  transition: opacity .25s var(--ease-out), transform .25s var(--ease-out) !important;
+}
+#study-pal-toast.sp-toast-in { opacity: 1; transform: translateX(-50%) translateY(0) !important; }
+#study-pal-toast::before {
+  content: "✓";
+  flex: 0 0 auto;
+  display: inline-flex;
+  width: 20px; height: 20px;
+  border-radius: 50%;
+  background: var(--brand-600, #14B8A6);
+  color: #fff;
+  font-size: 12px;
+  align-items: center;
+  justify-content: center;
+}
+#study-pal-toast[data-type="error"]::before { content: "!"; background: #DC2626; }
+#study-pal-toast[data-type="warning"]::before { content: "!"; background: #EA580C; }
+#study-pal-toast[data-type="success"]::before { content: "✓"; background: var(--brand-600, #14B8A6); }
+
+/* ---------- 减少动效 ---------- */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; scroll-behavior: auto !important; }
+  .btn-primary:hover, .quick-card:hover, .nav-item:hover, .btn-ghost:hover { transform: none !important; }
+}

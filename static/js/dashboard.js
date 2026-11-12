@@ -320,7 +320,12 @@ function initNavigation() {
     });
   });
 
-  switchSection('dashboard');
+  var _initialSection = 'dashboard';
+  try {
+    var _qs = new URLSearchParams(window.location.search);
+    if (_qs.get('section')) _initialSection = _qs.get('section');
+  } catch (e) {}
+  switchSection(_initialSection);
 }
 
 function updateRightSidebar(section) {
@@ -412,6 +417,8 @@ function renderGrowth(info) {
   setText('growth-streak', streak);
   setText('rs-week-stars', stars);
   setText('week-stars-total', '本周共 ' + stars + ' 颗');
+  setText('growth-stat-hours', weekHours.toFixed(1));
+  setText('growth-stat-stars', stars);
 
   // 仪表盘预览卡
   setText('exam-school', streak + ' 天');
@@ -619,6 +626,13 @@ function updateTaskCounts() {
   var completed = _tasksCache.filter(function(t) { return t.status === 'completed'; }).length;
   setText('tasks-pending-count', pending + ' 待完成');
   setText('tasks-completed-count', completed + ' 已完成');
+
+  var total = _tasksCache.length;
+  var pct = total ? Math.round((completed / total) * 100) : 0;
+  setText('task-progress-text', completed + ' / ' + total);
+  setText('task-progress-pct', pct + '%');
+  var fill = document.getElementById('task-progress-fill');
+  if (fill) fill.style.width = pct + '%';
 }
 
 function createTask(title) {
@@ -1501,18 +1515,23 @@ async function saveAiConfig() {
 // ============================================================
 // 工具函数
 // ============================================================
-function showToast(message) {
+function showToast(message, type) {
   var toast = document.getElementById('study-pal-toast');
   if (!toast) {
     toast = document.createElement('div');
     toast.id = 'study-pal-toast';
-    toast.style.cssText = 'position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1A1A1A;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:9999;opacity:1;transition:opacity ' + (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? '0.01s' : '0.3s') + ';pointer-events:none;';
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', 'polite');
     document.body.appendChild(toast);
   }
+  toast.setAttribute('data-type', type || 'success');
   toast.textContent = message;
-  toast.style.opacity = '1';
+  toast.classList.remove('sp-toast-in');
+  // 触发重排，确保动画可重放
+  void toast.offsetWidth;
+  toast.classList.add('sp-toast-in');
   clearTimeout(toast._timer);
-  toast._timer = setTimeout(function() { toast.style.opacity = '0'; }, 2500);
+  toast._timer = setTimeout(function() { toast.classList.remove('sp-toast-in'); }, 2600);
 }
 
 function escapeHtml(str) {
